@@ -137,7 +137,7 @@ impl<'text> Parser<'text> {
         expr
     }
 
-    fn peek_expr_op(&self, prec: ExprPrec) -> Option<(OpKind, ExprPrec, ExprPrec)> {
+    fn peek_expr_op(&self, _prec: ExprPrec) -> Option<(OpKind, ExprPrec, ExprPrec)> {
         Some(match self.peek() {
             TokenKind::Plus => (OpKind::Add, ExprPrec::AddSub, ExprPrec::AddSub),
             TokenKind::Hyphen => (OpKind::Sub, ExprPrec::AddSub, ExprPrec::AddSub),
@@ -174,6 +174,12 @@ impl<'text> Parser<'text> {
                 })
             }
 
+            TokenKind::OpenParen => ast::Expr::Grouped(Box::new(ast::Grouped {
+                open_paren: self.parse_token(),
+                expr: self.parse_expr(),
+                close_paren: self.parse_token(),
+            })),
+
             TokenKind::Plus | TokenKind::Hyphen | TokenKind::Star | TokenKind::ForSlash => {
                 ast::Expr::Missing(self.last_ignore_spans)
             }
@@ -186,7 +192,6 @@ impl<'text> Parser<'text> {
             TokenKind::LineComment => todo!(),
 
             TokenKind::BackSlash => todo!(),
-            TokenKind::OpenParen => todo!(),
             TokenKind::CloseParen => todo!(),
             TokenKind::OpenSquare => todo!(),
             TokenKind::CloseSquare => todo!(),

@@ -164,8 +164,18 @@ pub enum Expr<'text> {
     IntegerLiteral(Token![Integer<'text>]),
     FloatLiteral(FloatLiteral<'text>),
     Ident(Ident<'text>),
+    Grouped(Box<Grouped<'text>>),
     Infix(Box<InfixExpr<'text>>),
     Missing(Spans),
+}
+
+#[derive(Debug, MaybeAstNode, AstNode)]
+pub struct Grouped<'text> {
+    #[node(always)]
+    pub open_paren: Token![OpenParen<'text>],
+    pub expr: Expr<'text>,
+    #[node(always)]
+    pub close_paren: Token![CloseParen<'text>],
 }
 
 #[derive(Debug, MaybeAstNode, AstNode)]
