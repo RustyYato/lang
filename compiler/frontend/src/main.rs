@@ -16,9 +16,8 @@ fn main() -> anyhow::Result<()> {
 
     let mut parser = parser::parser::Parser::new(&file);
 
-    println!("{:?}", parser.parse_ident());
-    println!("{:?}", parser.parse_ident());
-    println!("{:?}", parser.parse_ident());
+    parser.consume_ignored_tokens();
+    println!("{:#?}", parser.parse_expr());
 
     Ok(())
 }

@@ -1,6 +1,9 @@
 use std::num::NonZeroU32;
 
-use crate::span::{ByteSpan, Position, Span, TextSpan};
+use crate::{
+    lexer,
+    span::{ByteSpan, Position, Span, TextSpan},
+};
 use derive_ast_node::{AstNode, MaybeAstNode};
 
 pub trait AstNode: MaybeAstNode {
@@ -105,6 +108,8 @@ pub struct TokenInfo<'text> {
     pub text: &'text str,
     #[node(spans)]
     pub span: Spans,
+    pub ignored: Vec<lexer::Token<'text>>,
+    pub ignored_span: Spans,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
@@ -123,18 +128,18 @@ impl IdentId {
 
 #[derive(Debug, MaybeAstNode, AstNode)]
 pub struct Ident<'text> {
+    #[node(ignore)]
     pub id: Option<IdentId>,
-    pub text: &'text str,
-    #[node(spans)]
-    pub span: Spans,
+    #[node(always)]
+    pub info: TokenInfo<'text>,
 }
 
 #[derive(Debug, MaybeAstNode, AstNode)]
 pub struct Token<'text, const TOKEN_KIND: u8> {
+    #[node(ignore)]
     pub valid: bool,
-    pub text: &'text str,
-    #[node(spans)]
-    pub span: Spans,
+    #[node(always)]
+    pub info: TokenInfo<'text>,
 }
 
 macro_rules! Token {
@@ -150,20 +155,20 @@ macro_rules! Token {
 pub enum Expr<'text> {
     IntegerLiteral(TokenInfo<'text>),
     Ident(Ident<'text>),
-    // Infix(Box<InfixExpr<'text>>),
+    Infix(Box<InfixExpr<'text>>),
 }
 
 #[derive(Debug, MaybeAstNode, AstNode)]
 pub struct InfixExpr<'text> {
-    // #[node(always)]
-    left: Expr<'text>,
-    op: BinOp<'text>,
     #[node(always)]
-    right: Expr<'text>,
+    pub left: Expr<'text>,
+    pub op: InfixOp<'text>,
+    #[node(always)]
+    pub right: Expr<'text>,
 }
 
 #[derive(Debug, MaybeAstNode, AstNode)]
-enum BinOp<'text> {
+pub enum InfixOp<'text> {
     Add(Token![Plus<'text>]),
     Sub(Token![Hyphen<'text>]),
     Mul(Token![Star<'text>]),
