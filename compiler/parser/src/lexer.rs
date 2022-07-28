@@ -157,7 +157,11 @@ impl<'text> Lexer<'text> {
             '{' => TokenKind::OpenCurly,
             '}' => TokenKind::CloseCurly,
             '.' => TokenKind::Dot,
-            '#' => TokenKind::LineComment,
+            '#' => {
+                len = memchr::memchr(b'\n', original.as_bytes()).unwrap_or(original.len());
+                self.text = original[len..].chars();
+                TokenKind::LineComment
+            }
             '0'..='9' => {
                 let bytes = original.as_bytes();
                 let end = bytes

@@ -65,9 +65,9 @@ impl<'text> Parser<'text> {
 
     pub fn consume_ignored_tokens(&mut self) -> Vec<lexer::Token<'text>> {
         let start = self.lexer.pos();
-        let tokens = Vec::new();
+        let mut tokens = Vec::new();
         while matches!(self.peek(), TokenKind::WhiteSpace | TokenKind::LineComment) {
-            self.lexer.lex();
+            tokens.push(self.lexer.lex());
         }
         let end = self.lexer.pos();
         self.last_ignore_spans = start.to(end);
