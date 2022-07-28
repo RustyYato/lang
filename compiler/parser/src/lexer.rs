@@ -34,46 +34,58 @@ impl Pos {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
-pub enum TokenKind {
-    Eof,
-    Unknown,
-    WhiteSpace,
-    LineComment,
+macro_rules! token_kinds {
+    ($($name:ident)*) => {
+        #[repr(u8)]
+        #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+        pub enum TokenKind {
+            $($name,)*
+        }
+
+        pub const TOKEN_KINDS: &[TokenKind] = &[$(TokenKind::$name,)*];
+
+
+    };
+}
+token_kinds! {
+    Eof
+    Unknown
+    WhiteSpace
+    LineComment
 
     // symbols
-    Plus,
-    Hyphen,
-    Star,
-    ForSlash,
-    BackSlash,
-    OpenParen,
-    CloseParen,
-    OpenSquare,
-    CloseSquare,
-    OpenCurly,
-    CloseCurly,
-    Dot,
+    Plus
+    Hyphen
+    Star
+    ForSlash
+    BackSlash
+    OpenParen
+    CloseParen
+    OpenSquare
+    CloseSquare
+    OpenCurly
+    CloseCurly
+    Dot
 
     // no period or exp
-    Integer,
+    Integer
     // only period
-    SimpleFloat,
+    SimpleFloat
     // only exp
-    ExpFloat,
+    ExpFloat
     // period and exp
-    SciFloat,
+    SciFloat
 
     // keywords
-    Match,
-    If,
-    Else,
-    Loop,
-    Break,
-    Continue,
+    Match
+    If
+    Else
+    Loop
+    Break
+    Continue
 
     // ident + contextual keywords
-    BasicIdent,
+    BasicIdent
 }
 
 #[derive(Clone)]

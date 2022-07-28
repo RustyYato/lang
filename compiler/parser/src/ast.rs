@@ -1,10 +1,33 @@
-use std::num::NonZeroU32;
+use std::{fmt::Debug, num::NonZeroU32};
 
 use crate::{
-    lexer,
+    lexer::{self, TokenKind},
     span::{ByteSpan, Position, Span, TextSpan},
 };
-use derive_ast_node::{AstNode, MaybeAstNode};
+use derive_ast_node::{AstNode, MaybeAstNode, SerializeTest};
+
+pub struct Display<'a, T: ?Sized>(&'a T);
+
+impl<T: ?Sized + SerializeTest> core::fmt::Display for Display<'_, T> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.0.serialize(f)
+    }
+}
+
+pub trait SerializeTest {
+    fn serialize(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result;
+
+    fn display_serialize(&self) -> Display<'_, Self>
+    where
+        Self: Sized,
+    {
+        Display(self)
+    }
+
+    fn to_serialize_string(&self) -> String {
+        Display(self).to_string()
+    }
+}
 
 pub trait AstNode: MaybeAstNode {
     fn span<T: Position>(&self) -> Span<T> {
@@ -57,6 +80,12 @@ impl<A: ?Sized + AstNode> AstNode for Box<A> {
 
     fn end<T: Position>(&self) -> T {
         A::end(self)
+    }
+}
+
+impl<A: ?Sized + SerializeTest> SerializeTest for Box<A> {
+    fn serialize(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        A::serialize(self, f)
     }
 }
 
@@ -159,7 +188,7 @@ pub struct FloatLiteral<'text> {
     pub info: TokenInfo<'text>,
 }
 
-#[derive(Debug, MaybeAstNode, AstNode)]
+#[derive(Debug, MaybeAstNode, AstNode, SerializeTest)]
 pub enum Expr<'text> {
     IntegerLiteral(Token![Integer<'text>]),
     FloatLiteral(FloatLiteral<'text>),
@@ -169,7 +198,7 @@ pub enum Expr<'text> {
     Missing(Spans),
 }
 
-#[derive(Debug, MaybeAstNode, AstNode)]
+#[derive(Debug, MaybeAstNode, AstNode, SerializeTest)]
 pub struct Grouped<'text> {
     #[node(always)]
     pub open_paren: Token![OpenParen<'text>],
@@ -178,7 +207,7 @@ pub struct Grouped<'text> {
     pub close_paren: Token![CloseParen<'text>],
 }
 
-#[derive(Debug, MaybeAstNode, AstNode)]
+#[derive(Debug, MaybeAstNode, AstNode, SerializeTest)]
 pub struct InfixExpr<'text> {
     #[node(always)]
     pub left: Expr<'text>,
@@ -187,10 +216,104 @@ pub struct InfixExpr<'text> {
     pub right: Expr<'text>,
 }
 
-#[derive(Debug, MaybeAstNode, AstNode)]
+#[derive(Debug, MaybeAstNode, AstNode, SerializeTest)]
 pub enum InfixOp<'text> {
     Add(Token![Plus<'text>]),
     Sub(Token![Hyphen<'text>]),
     Mul(Token![Star<'text>]),
     Div(Token![ForSlash<'text>]),
+}
+
+impl SerializeTest for bool {
+    fn serialize(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        self.fmt(f)
+    }
+}
+
+impl<const TOKEN_KIND: u8> Token<'_, TOKEN_KIND> {
+    const TOKEN_KIND: TokenKind = crate::lexer::TOKEN_KINDS[TOKEN_KIND as usize];
+}
+
+fn serialize_ignored(
+    f: &mut core::fmt::Formatter<'_>,
+    ignored: &[lexer::Token<'_>],
+    spans: Spans,
+) -> core::fmt::Result {
+    if !ignored.is_empty() {
+        write!(f, ",ignore ")?;
+        spans.serialize(f)?;
+        write!(f, " (")?;
+        for i in ignored {
+            write!(
+                f,
+                "{:?} @ {} = {:?},",
+                i.kind,
+                i.span.display_serialize(),
+                i.text
+            )?;
+        }
+        write!(f, "),")?;
+    }
+
+    Ok(())
+}
+
+impl<const TOKEN_KIND: u8> SerializeTest for Token<'_, TOKEN_KIND> {
+    fn serialize(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        write!(
+            f,
+            "{:?} @ {} / valid={} = {:?}",
+            Self::TOKEN_KIND,
+            self.info.span.display_serialize(),
+            self.valid,
+            self.info.text,
+        )?;
+
+        serialize_ignored(f, &self.info.ignored, self.info.ignored_span)
+    }
+}
+
+impl SerializeTest for FloatLiteral<'_> {
+    fn serialize(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        write!(
+            f,
+            "FloatLiteral @ {} / valid={} = {:?}",
+            self.info.span.display_serialize(),
+            self.valid,
+            self.info.text,
+        )?;
+
+        serialize_ignored(f, &self.info.ignored, self.info.ignored_span)
+    }
+}
+
+impl SerializeTest for Ident<'_> {
+    fn serialize(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        write!(
+            f,
+            "{:?} <{:?}> @ {}",
+            self.info.text,
+            match &self.id {
+                Some(id) => id as &dyn core::fmt::Debug,
+                None => &"invalid",
+            },
+            self.info.span.display_serialize()
+        )?;
+
+        serialize_ignored(f, &self.info.ignored, self.info.ignored_span)
+    }
+}
+
+impl SerializeTest for Spans {
+    fn serialize(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        write!(f, "{:?} / {:?}", self.byte, self.text)
+    }
+}
+
+impl SerializeTest for TokenInfo<'_> {
+    fn serialize(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        write!(f, "{:?} @ {}", self.text, self.span.display_serialize())?;
+
+        serialize_ignored(f, &self.ignored, self.ignored_span)
+    }
 }
