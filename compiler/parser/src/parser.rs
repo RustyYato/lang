@@ -1,11 +1,13 @@
 use crate::{
-    ast,
+    ast::{self, Spans},
     lexer::{self, Lexer, TokenKind},
+    span::{BytePos, ByteSpan, TextPos, TextSpan},
 };
 
 pub struct Parser<'text> {
     lexer: Lexer<'text>,
     ident_id: u32,
+    last_ignore_spans: Spans,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
@@ -28,6 +30,16 @@ impl<'text> Parser<'text> {
         Self {
             lexer: Lexer::new(text),
             ident_id: 0,
+            last_ignore_spans: Spans {
+                byte: ByteSpan {
+                    start: BytePos { pos: 0 },
+                    end: BytePos { pos: 0 },
+                },
+                text: TextSpan {
+                    start: TextPos { line: 0, col: 0 },
+                    end: TextPos { line: 0, col: 0 },
+                },
+            },
         }
     }
 
@@ -52,10 +64,13 @@ impl<'text> Parser<'text> {
     }
 
     pub fn consume_ignored_tokens(&mut self) -> Vec<lexer::Token<'text>> {
+        let start = self.lexer.pos();
         let tokens = Vec::new();
         while matches!(self.peek(), TokenKind::WhiteSpace | TokenKind::LineComment) {
             self.lexer.lex();
         }
+        let end = self.lexer.pos();
+        self.last_ignore_spans = start.to(end);
         tokens
     }
 
@@ -159,16 +174,17 @@ impl<'text> Parser<'text> {
                 })
             }
 
+            TokenKind::Plus | TokenKind::Hyphen | TokenKind::Star | TokenKind::ForSlash => {
+                ast::Expr::Missing(self.last_ignore_spans)
+            }
+
             TokenKind::BasicIdent => unreachable!(),
 
             TokenKind::Eof => todo!(),
             TokenKind::Unknown => todo!(),
             TokenKind::WhiteSpace => todo!(),
             TokenKind::LineComment => todo!(),
-            TokenKind::Plus => todo!(),
-            TokenKind::Hyphen => todo!(),
-            TokenKind::Star => todo!(),
-            TokenKind::ForSlash => todo!(),
+
             TokenKind::BackSlash => todo!(),
             TokenKind::OpenParen => todo!(),
             TokenKind::CloseParen => todo!(),

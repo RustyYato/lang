@@ -69,7 +69,7 @@ pub struct Spanned<T> {
 
 pub trait Walk {}
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub struct Spans {
     pub byte: ByteSpan,
     pub text: TextSpan,
@@ -165,6 +165,7 @@ pub enum Expr<'text> {
     FloatLiteral(FloatLiteral<'text>),
     Ident(Ident<'text>),
     Infix(Box<InfixExpr<'text>>),
+    Missing(Spans),
 }
 
 #[derive(Debug, MaybeAstNode, AstNode)]
