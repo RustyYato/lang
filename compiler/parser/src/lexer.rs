@@ -55,6 +55,15 @@ pub enum TokenKind {
     CloseCurly,
     Dot,
 
+    // no period or exp
+    Integer,
+    // only period
+    SimpleFloat,
+    // only exp
+    ExpFloat,
+    // period and exp
+    SciFloat,
+
     // keywords
     Match,
     If,
@@ -152,6 +161,53 @@ impl<'text> Lexer<'text> {
             '}' => TokenKind::CloseCurly,
             '.' => TokenKind::Dot,
             '#' => TokenKind::LineComment,
+            '0'..='9' => {
+                let bytes = original.as_bytes();
+                let end = bytes
+                    .iter()
+                    .position(|&byte| !matches!(byte, b'0'..=b'9'))
+                    .unwrap_or(bytes.len());
+
+                let bytes = &bytes[end..];
+
+                let mut has_period = false;
+                let mut has_exp = false;
+
+                let bytes = if let [b'.', b'0'..=b'9', bytes @ ..] = bytes {
+                    has_period = true;
+                    let end = bytes
+                        .iter()
+                        .position(|&byte| !matches!(byte, b'0'..=b'9'))
+                        .unwrap_or(bytes.len());
+                    &bytes[end..]
+                } else {
+                    bytes
+                };
+
+                let bytes = if let [b'e', b'+' | b'-', b'0'..=b'9', bytes @ ..]
+                | [b'e', b'0'..=b'9', bytes @ ..] = bytes
+                {
+                    has_exp = true;
+                    let end = bytes
+                        .iter()
+                        .position(|&byte| !matches!(byte, b'0'..=b'9'))
+                        .unwrap_or(bytes.len());
+                    &bytes[end..]
+                } else {
+                    bytes
+                };
+
+                let text = original;
+                len = text.len() - bytes.len();
+                self.text = text[text.len() - bytes.len()..].chars();
+
+                match (has_period, has_exp) {
+                    (true, true) => TokenKind::SciFloat,
+                    (true, false) => TokenKind::SimpleFloat,
+                    (false, true) => TokenKind::ExpFloat,
+                    (false, false) => TokenKind::Integer,
+                }
+            }
             c if c == '_' || c.is_xid_start() => {
                 loop {
                     let prev = self.text.clone();

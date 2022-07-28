@@ -152,8 +152,17 @@ macro_rules! Token {
 }
 
 #[derive(Debug, MaybeAstNode, AstNode)]
+pub struct FloatLiteral<'text> {
+    #[node(ignore)]
+    pub valid: bool,
+    #[node(always)]
+    pub info: TokenInfo<'text>,
+}
+
+#[derive(Debug, MaybeAstNode, AstNode)]
 pub enum Expr<'text> {
-    IntegerLiteral(TokenInfo<'text>),
+    IntegerLiteral(Token![Integer<'text>]),
+    FloatLiteral(FloatLiteral<'text>),
     Ident(Ident<'text>),
     Infix(Box<InfixExpr<'text>>),
 }

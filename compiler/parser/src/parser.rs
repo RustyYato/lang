@@ -136,6 +136,29 @@ impl<'text> Parser<'text> {
         match self.peek() {
             token if token >= TokenKind::BasicIdent => ast::Expr::Ident(self.parse_ident()),
 
+            TokenKind::Integer => ast::Expr::IntegerLiteral(self.parse_token()),
+            TokenKind::SimpleFloat => {
+                let token: Token![SimpleFloat<'_>] = self.parse_token();
+                ast::Expr::FloatLiteral(ast::FloatLiteral {
+                    valid: token.valid,
+                    info: token.info,
+                })
+            }
+            TokenKind::ExpFloat => {
+                let token: Token![ExpFloat<'_>] = self.parse_token();
+                ast::Expr::FloatLiteral(ast::FloatLiteral {
+                    valid: token.valid,
+                    info: token.info,
+                })
+            }
+            TokenKind::SciFloat => {
+                let token: Token![SciFloat<'_>] = self.parse_token();
+                ast::Expr::FloatLiteral(ast::FloatLiteral {
+                    valid: token.valid,
+                    info: token.info,
+                })
+            }
+
             TokenKind::BasicIdent => unreachable!(),
 
             TokenKind::Eof => todo!(),
