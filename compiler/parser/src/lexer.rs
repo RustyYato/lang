@@ -120,8 +120,7 @@ impl<'text> Lexer<'text> {
         };
 
         let mut len = c.len_utf8();
-        let mut col_offset = len;
-        self.pos += len as u32;
+        let mut col_offset = None;
 
         let mut kind = match c {
             ' ' | '\t' => {
@@ -132,9 +131,7 @@ impl<'text> Lexer<'text> {
                     if byte == b'\n' {
                         self.line += 1;
                         self.col = 0;
-                        col_offset = 0;
-                    } else {
-                        col_offset = position;
+                        col_offset = Some(0);
                     }
 
                     self.text = unsafe { self.text.as_str().get_unchecked(len - 1..).chars() }
@@ -145,7 +142,7 @@ impl<'text> Lexer<'text> {
             '\n' => {
                 self.line += 1;
                 self.col = 0;
-                col_offset = 0;
+                col_offset = Some(0);
                 TokenKind::WhiteSpace
             }
             '+' => TokenKind::Plus,
@@ -225,7 +222,8 @@ impl<'text> Lexer<'text> {
         };
 
         let text = unsafe { original.get_unchecked(..len) };
-        self.col += col_offset as u32;
+        self.pos += len as u32;
+        self.col += col_offset.unwrap_or(len) as u32;
 
         if kind == TokenKind::BasicIdent {
             kind = match text {
