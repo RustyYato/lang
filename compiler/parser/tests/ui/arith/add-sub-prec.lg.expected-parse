@@ -3,20 +3,30 @@ Expr
       Expr
          InfixExpr
             Expr
-               "a" <ident.1> @ b13..b14 / 2:1..2:2
-               ignore b14..b15 / 2:2..2:3 
-                  WhiteSpace @ b14..b15 / 2:2..2:3 = " "
+               InfixExpr
+                  Expr
+                     "a" <ident.1> @ b13..b14 / 2:1..2:2
+                     ignore b14..b15 / 2:2..2:3 
+                        WhiteSpace @ b14..b15 / 2:2..2:3 = " "
+                  InfixOp
+                     Plus @ b15..b16 / 2:3..2:4 / valid=true = "+"
+                     ignore b16..b17 / 2:4..2:5 
+                        WhiteSpace @ b16..b17 / 2:4..2:5 = " "
+                  Expr
+                     "b" <ident.2> @ b17..b18 / 2:5..2:6
+                     ignore b18..b19 / 2:6..2:7 
+                        WhiteSpace @ b18..b19 / 2:6..2:7 = " "
             InfixOp
-               Plus @ b15..b16 / 2:3..2:4 / valid=true = "+"
-               ignore b16..b17 / 2:4..2:5 
-                  WhiteSpace @ b16..b17 / 2:4..2:5 = " "
+               Hyphen @ b19..b20 / 2:7..2:8 / valid=true = "-"
+               ignore b20..b21 / 2:8..2:9 
+                  WhiteSpace @ b20..b21 / 2:8..2:9 = " "
             Expr
-               "b" <ident.2> @ b17..b18 / 2:5..2:6
-               ignore b18..b19 / 2:6..2:7 
-                  WhiteSpace @ b18..b19 / 2:6..2:7 = " "
+               "c" <ident.3> @ b21..b22 / 2:9..2:10
+               ignore b22..b23 / 2:10..2:11 
+                  WhiteSpace @ b22..b23 / 2:10..2:11 = " "
       InfixOp
-         Hyphen @ b19..b20 / 2:7..2:8 / valid=true = "-"
-         ignore b20..b21 / 2:8..2:9 
-            WhiteSpace @ b20..b21 / 2:8..2:9 = " "
+         Plus @ b23..b24 / 2:11..2:12 / valid=true = "+"
+         ignore b24..b25 / 2:12..2:13 
+            WhiteSpace @ b24..b25 / 2:12..2:13 = " "
       Expr
-         "c" <ident.3> @ b21..b22 / 2:9..2:10
+         "d" <ident.4> @ b25..b26 / 2:13..2:14
