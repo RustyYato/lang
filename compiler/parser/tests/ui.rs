@@ -171,9 +171,33 @@ impl File {
     }
 }
 
+#[derive(Default)]
 struct Counts {
     regened: u32,
     commited: u32,
+    failed: u32,
+    passed: u32,
+    new: u32,
+}
+
+impl Counts {
+    fn report(&self) {
+        if self.passed != 0 {
+            println!("\t{} tests passed", self.passed.green());
+        }
+        if self.failed != 0 {
+            println!("\t{} tests failed", self.failed.red());
+        }
+        if self.commited != 0 {
+            println!("\t{} tests committed", self.commited.yellow());
+        }
+        if self.regened != 0 {
+            println!("\t{} tests regened", self.regened.magenta());
+        }
+        if self.new != 0 {
+            println!("\t{} new tests", self.new.cyan());
+        }
+    }
 }
 
 trait Output {
@@ -223,6 +247,9 @@ fn main() -> anyhow::Result<()> {
     println!("\tFound {} test-case(s)...", tests.len().green());
     print!("\tRunning ui tests...");
 
+    let mut parse_counts = Counts::default();
+    let mut parse_error_counts = Counts::default();
+
     for (i, file) in tests.iter().enumerate() {
         if i % 50 == 0 {
             println!();
@@ -251,6 +278,7 @@ fn main() -> anyhow::Result<()> {
             &output,
             "expected-parse",
             &results,
+            &mut parse_counts,
         )?);
 
         print_outputs.extend(handle_test_case(
@@ -259,6 +287,7 @@ fn main() -> anyhow::Result<()> {
             &errors,
             "expected-parse-errors",
             &results,
+            &mut parse_error_counts,
         )?)
     }
     println!("\n");
@@ -267,6 +296,12 @@ fn main() -> anyhow::Result<()> {
         out.print();
     }
 
+    println!("\tParse tests...");
+    parse_counts.report();
+    println!("\tParse error tests...");
+    parse_error_counts.report();
+
+    println!();
     Ok(())
 }
 
@@ -276,6 +311,7 @@ fn handle_test_case(
     output: &dyn SerializeTest,
     extension: &str,
     results: &HashMap<PathBuf, ParseResult>,
+    counts: &mut Counts,
 ) -> anyhow::Result<Option<Box<dyn Output>>> {
     let output = output.to_serialize_string();
     let output = format(&output, SAVE_TAB);
@@ -299,10 +335,12 @@ fn handle_test_case(
             }
 
             if args.regen {
+                counts.regened += 1;
                 print!("{}", "R".magenta());
 
                 std::fs::write(&expected_path, output)?;
             } else {
+                counts.failed += 1;
                 print!("{}", "F".red());
 
                 return Ok(Some(Box::new(FailedTest {
@@ -316,12 +354,15 @@ fn handle_test_case(
                 })));
             }
         } else {
+            counts.passed += 1;
             print!("{}", ".".green());
         }
     } else if args.commit {
+        counts.commited += 1;
         print!("{}", "C".bright_yellow());
         std::fs::write(&expected_path, output)?;
     } else {
+        counts.new += 1;
         print!("{}", "+".bright_yellow());
         struct NewTest {
             message: String,
