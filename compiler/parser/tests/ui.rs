@@ -337,7 +337,7 @@ fn handle_test_case(
 
         return Ok(Some(Box::new(NewTest {
             message: format!(
-                "new errors test {} ({})",
+                "new {extension} test {} ({})",
                 file.name.bright_yellow(),
                 file.rel_path.display().dimmed()
             ),
