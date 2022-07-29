@@ -294,6 +294,7 @@ fn handle_test_case(
                 fn print(&self) {
                     println!("{}", self.message);
                     print_diff(&self.output, &self.expected);
+                    println!();
                 }
             }
 
@@ -332,6 +333,7 @@ fn handle_test_case(
                 let output = format(&self.output, TAB);
                 println!("{}", self.message);
                 println!("{}", output.yellow());
+                println!();
             }
         }
 
@@ -371,6 +373,10 @@ fn print_diff(output: &str, expected: &str) {
                 }
             }
             differ::Tag::Replace => {
+                let ends_are_ws = |s: &str| {
+                    s.starts_with(char::is_whitespace) || s.ends_with(char::is_whitespace)
+                };
+
                 if output.len() == expected.len() {
                     for (&output, &expected) in output.iter().zip(expected) {
                         let output: Vec<_> = output.chars().collect();
@@ -384,26 +390,26 @@ fn print_diff(output: &str, expected: &str) {
                             match span.tag {
                                 differ::Tag::Equal => print!("{}", output.dimmed()),
                                 differ::Tag::Insert => {
-                                    if expected.contains(char::is_whitespace) {
+                                    if ends_are_ws(&expected) {
                                         print!("{}", expected.black().on_bright_red())
                                     } else {
                                         print!("{}", expected.bright_red())
                                     }
                                 }
                                 differ::Tag::Delete => {
-                                    if output.contains(char::is_whitespace) {
+                                    if ends_are_ws(&output) {
                                         print!("{}", output.black().on_bright_green())
                                     } else {
                                         print!("{}", output.bright_green())
                                     }
                                 }
                                 differ::Tag::Replace => {
-                                    if expected.contains(char::is_whitespace) {
+                                    if ends_are_ws(&expected) {
                                         print!("{}", expected.black().on_bright_red())
                                     } else {
                                         print!("{}", expected.bright_red())
                                     }
-                                    if output.contains(char::is_whitespace) {
+                                    if ends_are_ws(&output) {
                                         print!("{}", output.black().on_bright_green())
                                     } else {
                                         print!("{}", output.bright_green())
