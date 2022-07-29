@@ -8,5 +8,21 @@ edition = "2021"
 [dependencies]
 unicode-xid = '0.2'
 memchr = '2'
+thiserror = '1'
 
 derive-ast-node = { path = '../derive-ast-node' }
+
+[dev-dependencies]
+walkdir = '2'
+anyhow = '1'
+owo-colors = '3'
+differ = '1'
+
+[dev-dependencies.clap]
+version = '3'
+features = ['env']
+
+[[test]]
+name = "ui"
+path = "tests/ui.rs"
+harness = false

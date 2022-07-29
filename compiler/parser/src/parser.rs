@@ -4,10 +4,35 @@ use crate::{
     span::{BytePos, ByteSpan, TextPos, TextSpan},
 };
 
-pub struct Parser<'text> {
+use thiserror::Error;
+
+pub struct Parser<'a, 'text> {
     lexer: Lexer<'text>,
     ident_id: u32,
     last_ignore_spans: Spans,
+    errors: &'a mut dyn ErrorReporter,
+}
+
+pub trait ErrorReporter {
+    fn report(&mut self, error: Error);
+}
+
+impl<T: ErrorReporter + ?Sized> ErrorReporter for &mut T {
+    fn report(&mut self, error: Error) {
+        T::report(self, error)
+    }
+}
+
+impl ErrorReporter for Vec<Error> {
+    fn report(&mut self, error: Error) {
+        self.push(error)
+    }
+}
+
+#[derive(Debug, Error)]
+pub enum Error {
+    #[error("Expected expr at {:?}, but found {found:?}", .span.text)]
+    ExpectedExpr { found: TokenKind, span: Spans },
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
@@ -25,11 +50,12 @@ enum OpKind {
     Div,
 }
 
-impl<'text> Parser<'text> {
-    pub fn new(text: &'text str) -> Self {
+impl<'a, 'text> Parser<'a, 'text> {
+    pub fn new(errors: &'a mut dyn ErrorReporter, text: &'text str) -> Self {
         Self {
             lexer: Lexer::new(text),
             ident_id: 0,
+            errors,
             last_ignore_spans: Spans {
                 byte: ByteSpan {
                     start: BytePos { pos: 0 },
@@ -44,7 +70,11 @@ impl<'text> Parser<'text> {
     }
 
     pub fn peek(&self) -> TokenKind {
-        self.lexer.clone().lex().kind
+        self.peek_token().kind
+    }
+
+    pub fn peek_token(&self) -> lexer::Token<'text> {
+        self.lexer.clone().lex()
     }
 
     pub fn next_token(&mut self) -> (TokenKind, ast::TokenInfo<'text>) {
@@ -180,30 +210,36 @@ impl<'text> Parser<'text> {
                 close_paren: self.parse_token(),
             })),
 
-            TokenKind::Plus | TokenKind::Hyphen | TokenKind::Star | TokenKind::ForSlash => {
-                ast::Expr::Missing(self.last_ignore_spans)
-            }
+            TokenKind::Eof
+            | TokenKind::Plus
+            | TokenKind::Hyphen
+            | TokenKind::Star
+            | TokenKind::ForSlash => ast::Expr::Missing(self.last_ignore_spans),
 
             TokenKind::BasicIdent => unreachable!(),
 
-            TokenKind::Eof => todo!(),
-            TokenKind::Unknown => todo!(),
-            TokenKind::WhiteSpace => todo!(),
-            TokenKind::LineComment => todo!(),
+            TokenKind::Unknown | TokenKind::WhiteSpace | TokenKind::LineComment => unreachable!(),
 
-            TokenKind::BackSlash => todo!(),
-            TokenKind::CloseParen => todo!(),
-            TokenKind::OpenSquare => todo!(),
-            TokenKind::CloseSquare => todo!(),
-            TokenKind::OpenCurly => todo!(),
-            TokenKind::CloseCurly => todo!(),
-            TokenKind::Dot => todo!(),
-            TokenKind::Match => todo!(),
-            TokenKind::If => todo!(),
-            TokenKind::Else => todo!(),
-            TokenKind::Loop => todo!(),
-            TokenKind::Break => todo!(),
-            TokenKind::Continue => todo!(),
+            found @ (TokenKind::BackSlash
+            | TokenKind::CloseParen
+            | TokenKind::OpenSquare
+            | TokenKind::CloseSquare
+            | TokenKind::OpenCurly
+            | TokenKind::CloseCurly
+            | TokenKind::Dot
+            | TokenKind::Match
+            | TokenKind::If
+            | TokenKind::Else
+            | TokenKind::Loop
+            | TokenKind::Break
+            | TokenKind::Continue) => {
+                let (_, token) = self.next_token();
+                self.errors.report(Error::ExpectedExpr {
+                    found,
+                    span: token.span,
+                });
+                ast::Expr::Missing(self.last_ignore_spans)
+            }
         }
     }
 
