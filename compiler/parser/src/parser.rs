@@ -12,6 +12,7 @@ pub struct Parser<'a, 'text> {
     ident_id: u32,
     last_ignore_spans: Spans,
     errors: &'a mut dyn ErrorReporter,
+    keep_ignored_tokens: bool,
 }
 
 pub trait ErrorReporter {
@@ -84,6 +85,7 @@ impl<'a, 'text> Parser<'a, 'text> {
     pub fn new(errors: &'a mut dyn ErrorReporter, text: &'text str) -> Self {
         Self {
             lexer: Lexer::new(text),
+            keep_ignored_tokens: true,
             ident_id: 0,
             errors,
             last_ignore_spans: Spans {
@@ -99,6 +101,11 @@ impl<'a, 'text> Parser<'a, 'text> {
         }
     }
 
+    pub fn hide_ignored_tokens(&mut self) -> &mut Self {
+        self.keep_ignored_tokens = false;
+        self
+    }
+
     pub fn peek(&self) -> TokenKind {
         self.peek_token().kind
     }
@@ -109,29 +116,29 @@ impl<'a, 'text> Parser<'a, 'text> {
 
     pub fn next_token(&mut self) -> (TokenKind, ast::TokenInfo<'text>) {
         let token = self.lexer.lex();
-        let start = self.lexer.pos();
         let ignored = self.consume_ignored_tokens();
-        let end = self.lexer.pos();
         (
             token.kind,
             ast::TokenInfo {
                 text: token.text,
                 span: token.span,
                 ignored,
-                ignored_span: start.to(end),
             },
         )
     }
 
-    pub fn consume_ignored_tokens(&mut self) -> Vec<lexer::Token<'text>> {
+    pub fn consume_ignored_tokens(&mut self) -> ast::Ignored<'text> {
         let start = self.lexer.pos();
         let mut tokens = Vec::new();
         while matches!(self.peek(), TokenKind::WhiteSpace | TokenKind::LineComment) {
-            tokens.push(self.lexer.lex());
+            let token = self.lexer.lex();
+            if self.keep_ignored_tokens {
+                tokens.push(token);
+            }
         }
         let end = self.lexer.pos();
         self.last_ignore_spans = start.to(end);
-        tokens
+        ast::Ignored::new(tokens, start.to(end))
     }
 
     pub fn parse_ident(&mut self) -> ast::Ident<'text> {
@@ -208,6 +215,24 @@ impl<'a, 'text> Parser<'a, 'text> {
         expr
     }
 
+    pub fn parse_stmt(&mut self) -> ast::StmtLet<'text> {
+        ast::StmtLet {
+            let_tok: self.parse_token(),
+            name: self.parse_ident(),
+            eq_tok: self.parse_token(),
+            expr: self.parse_expr(),
+        }
+    }
+
+    pub fn parse_let_stmt(&mut self) -> ast::StmtLet<'text> {
+        ast::StmtLet {
+            let_tok: self.parse_token(),
+            name: self.parse_ident(),
+            eq_tok: self.parse_token(),
+            expr: self.parse_expr(),
+        }
+    }
+
     fn peek_expr_op(&self, _prec: ExprPrec) -> Option<(OpKind, ExprPrec, ExprPrec)> {
         Some(match self.peek() {
             TokenKind::Plus => (OpKind::Add, ExprPrec::AddSub, ExprPrec::AddSub),
@@ -274,6 +299,8 @@ impl<'a, 'text> Parser<'a, 'text> {
             | TokenKind::OpenCurly
             | TokenKind::CloseCurly
             | TokenKind::Dot
+            | TokenKind::Eq
+            | TokenKind::Let
             | TokenKind::Match
             | TokenKind::If
             | TokenKind::Else

@@ -66,6 +66,7 @@ token_kinds! {
     OpenCurly
     CloseCurly
     Dot
+    Eq
 
     // no period or exp
     Integer
@@ -77,6 +78,7 @@ token_kinds! {
     SciFloat
 
     // keywords
+    Let
     Match
     If
     Else

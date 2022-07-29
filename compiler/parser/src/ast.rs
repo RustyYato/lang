@@ -152,8 +152,34 @@ pub struct TokenInfo<'text> {
     pub text: &'text str,
     #[node(spans)]
     pub span: Spans,
-    pub ignored: Vec<lexer::Token<'text>>,
-    pub ignored_span: Spans,
+    pub ignored: Ignored<'text>,
+}
+
+#[derive(Debug)]
+pub struct Ignored<'text> {
+    inner: Option<Box<IgnoredInner<'text>>>,
+}
+
+impl<'text> Ignored<'text> {
+    pub(crate) fn new(ignored: Vec<lexer::Token<'text>>, span: Spans) -> Ignored {
+        Self {
+            inner: if ignored.is_empty() {
+                None
+            } else {
+                Some(Box::new(IgnoredInner {
+                    items: ignored,
+                    span,
+                }))
+            },
+        }
+    }
+}
+
+#[derive(Debug, MaybeAstNode, AstNode)]
+pub struct IgnoredInner<'text> {
+    pub items: Vec<lexer::Token<'text>>,
+    #[node(spans)]
+    pub span: Spans,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
@@ -193,6 +219,22 @@ macro_rules! Token {
     ($name:ident<$lt:lifetime>) => {
         $crate::ast::Token<$lt, {$crate::lexer::TokenKind::$name as u8}>
     };
+}
+
+#[derive(Debug, MaybeAstNode, AstNode, SerializeTest)]
+pub enum Stmt<'text> {
+    Let(StmtLet<'text>),
+    Expr(Expr<'text>),
+}
+
+#[derive(Debug, MaybeAstNode, AstNode, SerializeTest)]
+pub struct StmtLet<'text> {
+    #[node(always)]
+    pub let_tok: Token![Let<'text>],
+    pub name: Ident<'text>,
+    pub eq_tok: Token![Eq<'text>],
+    #[node(always)]
+    pub expr: Expr<'text>,
 }
 
 #[derive(Debug, MaybeAstNode, AstNode)]
@@ -249,16 +291,22 @@ impl<const TOKEN_KIND: u8> Token<'_, TOKEN_KIND> {
     pub const TOKEN_KIND: TokenKind = crate::lexer::TOKEN_KINDS[TOKEN_KIND as usize];
 }
 
-fn serialize_ignored(
-    f: &mut core::fmt::Formatter<'_>,
-    ignored: &[lexer::Token<'_>],
-    spans: Spans,
-) -> core::fmt::Result {
-    if !ignored.is_empty() {
+impl SerializeTest for Ignored<'_> {
+    fn serialize(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        if let Some(inner) = self.inner.as_ref() {
+            inner.serialize(f)?
+        }
+
+        Ok(())
+    }
+}
+
+impl SerializeTest for IgnoredInner<'_> {
+    fn serialize(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, ",ignore ")?;
-        spans.serialize(f)?;
+        self.span.serialize(f)?;
         write!(f, " (")?;
-        for i in ignored {
+        for i in &self.items {
             write!(
                 f,
                 "{:?} @ {} = {:?},",
@@ -268,23 +316,22 @@ fn serialize_ignored(
             )?;
         }
         write!(f, "),")?;
-    }
 
-    Ok(())
+        Ok(())
+    }
 }
 
 impl<const TOKEN_KIND: u8> SerializeTest for Token<'_, TOKEN_KIND> {
     fn serialize(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(
             f,
-            "{:?} @ {} / valid={} = {:?}",
+            "{:?} @ {} / valid={} = {:?}{}",
             Self::TOKEN_KIND,
             self.info.span.display_serialize(),
             self.valid,
             self.info.text,
-        )?;
-
-        serialize_ignored(f, &self.info.ignored, self.info.ignored_span)
+            self.info.ignored.display_serialize()
+        )
     }
 }
 
@@ -292,13 +339,12 @@ impl SerializeTest for FloatLiteral<'_> {
     fn serialize(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(
             f,
-            "FloatLiteral @ {} / valid={} = {:?}",
+            "FloatLiteral @ {} / valid={} = {:?}{}",
             self.info.span.display_serialize(),
             self.valid,
             self.info.text,
-        )?;
-
-        serialize_ignored(f, &self.info.ignored, self.info.ignored_span)
+            self.info.ignored.display_serialize()
+        )
     }
 }
 
@@ -306,16 +352,15 @@ impl SerializeTest for Ident<'_> {
     fn serialize(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(
             f,
-            "{:?} <{:?}> @ {}",
+            "{:?} <{:?}> @ {}{}",
             self.info.text,
             match &self.id {
                 Some(id) => id as &dyn core::fmt::Debug,
                 None => &"invalid",
             },
-            self.info.span.display_serialize()
-        )?;
-
-        serialize_ignored(f, &self.info.ignored, self.info.ignored_span)
+            self.info.span.display_serialize(),
+            self.info.ignored.display_serialize()
+        )
     }
 }
 
@@ -327,8 +372,12 @@ impl SerializeTest for Spans {
 
 impl SerializeTest for TokenInfo<'_> {
     fn serialize(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        write!(f, "{:?} @ {}", self.text, self.span.display_serialize())?;
-
-        serialize_ignored(f, &self.ignored, self.ignored_span)
+        write!(
+            f,
+            "{:?} @ {}{}",
+            self.text,
+            self.span.display_serialize(),
+            self.ignored.display_serialize()
+        )
     }
 }
