@@ -207,6 +207,8 @@ trait Output {
 fn main() -> anyhow::Result<()> {
     let args @ Args { regen, commit } = clap::Parser::parse();
 
+    let a = std::time::Instant::now();
+
     if regen {
         println!("Will regenerate failing tests...");
     }
@@ -301,6 +303,7 @@ fn main() -> anyhow::Result<()> {
     println!("\tParse error tests...");
     parse_error_counts.report();
 
+    println!("{:?}", a.elapsed());
     println!();
     Ok(())
 }
@@ -345,7 +348,7 @@ fn handle_test_case(
 
                 return Ok(Some(Box::new(FailedTest {
                     message: format!(
-                        "failed test {} ({})",
+                        "\tfailed test {} ({})",
                         file.name.bright_red(),
                         file.rel_path.display().dimmed(),
                     ),
@@ -380,7 +383,7 @@ fn handle_test_case(
 
         return Ok(Some(Box::new(NewTest {
             message: format!(
-                "new {extension} test {} ({})",
+                "\tnew {extension} test {} ({})",
                 file.name.bright_yellow(),
                 file.rel_path.display().dimmed()
             ),
