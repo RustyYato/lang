@@ -358,18 +358,18 @@ fn print_diff(output: &str, expected: &str) {
         let expected = &expected[span.b_start..span.b_end];
         match span.tag {
             differ::Tag::Equal => {
-                for line in output {
-                    println!("\t{}", line.dimmed())
+                for output in output {
+                    println!("\t{}", output.dimmed())
                 }
             }
             differ::Tag::Insert => {
-                for line in expected {
-                    println!("\t{}", line.red())
+                for expected in expected {
+                    println!("\t{}", expected.red())
                 }
             }
             differ::Tag::Delete => {
-                for line in output {
-                    println!("\t{}", line.green())
+                for output in output {
+                    println!("\t{}", output.green())
                 }
             }
             differ::Tag::Replace => {
@@ -379,10 +379,22 @@ fn print_diff(output: &str, expected: &str) {
 
                 if output.len() == expected.len() {
                     for (&output, &expected) in output.iter().zip(expected) {
+                        let output_s = &output;
+                        let expected_s = &expected;
                         let output: Vec<_> = output.chars().collect();
                         let expected: Vec<_> = expected.chars().collect();
 
                         print!("\t");
+
+                        let spans = Differ::new(&output, &expected).spans();
+
+                        if spans.len() > 10 {
+                            // if the two lines are very different, then fallback to just showing liens
+                            println!("{}", expected_s.red());
+                            println!("\t{}", output_s.green());
+                            continue;
+                        }
+
                         for span in Differ::new(&output, &expected).spans() {
                             let output = String::from_iter(&output[span.a_start..span.a_end]);
                             let expected = String::from_iter(&expected[span.b_start..span.b_end]);
@@ -421,11 +433,11 @@ fn print_diff(output: &str, expected: &str) {
                         println!()
                     }
                 } else {
-                    for line in expected {
-                        println!("\t{}", line.red())
+                    for expected in expected {
+                        println!("\t{}", expected.red())
                     }
-                    for line in output {
-                        println!("\t{}", line.green())
+                    for output in output {
+                        println!("\t{}", output.green())
                     }
                 }
             }
