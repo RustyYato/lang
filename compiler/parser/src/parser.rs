@@ -4,6 +4,7 @@ use crate::{
     span::{BytePos, ByteSpan, TextPos, TextSpan},
 };
 
+use ast::SerializeTest;
 use thiserror::Error;
 
 pub struct Parser<'a, 'text> {
@@ -33,6 +34,18 @@ impl ErrorReporter for Vec<Error> {
 pub enum Error {
     #[error("Expected expr at {:?}, but found {found:?}", .span.text)]
     ExpectedExpr { found: TokenKind, span: Spans },
+}
+
+impl SerializeTest for Error {
+    fn serialize(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        write!(f, "Error(")?;
+        match self {
+            Error::ExpectedExpr { found, span } => {
+                write!(f, "ExpectedExpr({:?},{},)", found, span.display_serialize())?
+            }
+        }
+        write!(f, ")")
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
@@ -210,11 +223,17 @@ impl<'a, 'text> Parser<'a, 'text> {
                 close_paren: self.parse_token(),
             })),
 
-            TokenKind::Eof
+            found @ (TokenKind::Eof
             | TokenKind::Plus
             | TokenKind::Hyphen
             | TokenKind::Star
-            | TokenKind::ForSlash => ast::Expr::Missing(self.last_ignore_spans),
+            | TokenKind::ForSlash) => {
+                self.errors.report(Error::ExpectedExpr {
+                    found,
+                    span: self.last_ignore_spans,
+                });
+                ast::Expr::Missing(self.last_ignore_spans)
+            }
 
             TokenKind::BasicIdent => unreachable!(),
 

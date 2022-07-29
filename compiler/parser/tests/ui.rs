@@ -214,9 +214,20 @@ fn main() -> anyhow::Result<()> {
     for file in &tests {
         let mut errors = Vec::new();
         let mut parser = parser::parser::Parser::new(&mut errors, &file.test);
-        parser.consume_ignored_tokens();
-        let output = parser.parse_expr();
-        let output = output.to_serialize_string();
+
+        let output = if file.test.starts_with("# parse_expr") {
+            parser.consume_ignored_tokens();
+            let output = parser.parse_expr();
+            output.to_serialize_string()
+        } else {
+            println!(
+                "{}: unknown test kind for {} ({})",
+                "WARNING".yellow(),
+                file.name.yellow(),
+                file.rel_path.display().dimmed()
+            );
+            continue;
+        };
 
         let output = format(&output, SAVE_TAB);
 
@@ -224,89 +235,117 @@ fn main() -> anyhow::Result<()> {
         if let Some(result) = results.get(&expected_parse) {
             let expected = format(&result.value, SAVE_TAB);
             if expected != output {
-                let output: Vec<_> = output.lines().collect();
-                let expected: Vec<_> = expected.lines().collect();
-
                 println!(
                     "failed test {} ({})",
                     file.name.bright_red(),
                     file.rel_path.display().dimmed()
                 );
-                for span in Differ::new(&output, &expected).spans() {
-                    let output = &output[span.a_start..span.a_end];
-                    let expected = &expected[span.b_start..span.b_end];
-                    match span.tag {
-                        differ::Tag::Equal => {
-                            for line in output {
-                                println!("\t{}", line.dimmed())
-                            }
-                        }
-                        differ::Tag::Insert => {
-                            for line in expected {
-                                println!("\t{}", line.red())
-                            }
-                        }
-                        differ::Tag::Delete => {
-                            for line in output {
-                                println!("\t{}", line.green())
-                            }
-                        }
-                        differ::Tag::Replace => {
-                            if output.len() == expected.len() {
-                                for (&output, &expected) in output.iter().zip(expected) {
-                                    let output: Vec<_> = output.chars().collect();
-                                    let expected: Vec<_> = expected.chars().collect();
-
-                                    print!("\t");
-                                    for span in Differ::new(&output, &expected).spans() {
-                                        let output =
-                                            String::from_iter(&output[span.a_start..span.a_end]);
-                                        let expected =
-                                            String::from_iter(&expected[span.b_start..span.b_end]);
-
-                                        match span.tag {
-                                            differ::Tag::Equal => print!("{}", output.dimmed()),
-                                            differ::Tag::Insert => {
-                                                print!("{}", expected.bright_red())
-                                            }
-                                            differ::Tag::Delete => {
-                                                print!("{}", output.bright_green())
-                                            }
-                                            differ::Tag::Replace => {
-                                                print!("{}", expected.bright_red());
-                                                print!("{}", output.bright_green());
-                                            }
-                                        }
-                                    }
-
-                                    println!()
-                                }
-                            } else {
-                                for line in &output[span.a_start..span.a_end] {
-                                    println!("-\t{}", line.red())
-                                }
-                                for line in &expected[span.b_start..span.b_end] {
-                                    println!("+\t{}", line.green())
-                                }
-                            }
-                        }
-                    }
-                }
+                print_diff(&output, &expected);
             }
         } else if args.commit {
             std::fs::write(&expected_parse, output)?;
         } else {
             let output = format(&output, TAB);
             println!(
-                "new test {} ({})",
+                "new parse test {} ({})",
                 file.name.bright_yellow(),
                 file.rel_path.display().dimmed()
             );
             println!("{}", output.yellow());
+        }
+
+        if !errors.is_empty() {
+            let output = errors.to_serialize_string();
+            let expected_errors = file.path.with_extension("expected-parse-errors");
+            if let Some(expected_errors) = results.get(&expected_errors) {
+                let expected = format(&expected_errors.value, SAVE_TAB);
+                if expected != output {
+                    println!(
+                        "failed test {} ({})",
+                        file.name.bright_red(),
+                        file.rel_path.display().dimmed()
+                    );
+                    print_diff(&output, &expected);
+                }
+            } else if args.commit {
+                std::fs::write(&expected_errors, output)?;
+            } else {
+                let output = format(&output, TAB);
+                println!(
+                    "new errors test {} ({})",
+                    file.name.bright_yellow(),
+                    file.rel_path.display().dimmed()
+                );
+                println!("{}", output.yellow());
+            }
         }
     }
 
     println!();
 
     Ok(())
+}
+
+fn print_diff(output: &str, expected: &str) {
+    let output: Vec<_> = output.lines().collect();
+    let expected: Vec<_> = expected.lines().collect();
+
+    for span in Differ::new(&output, &expected).spans() {
+        let output = &output[span.a_start..span.a_end];
+        let expected = &expected[span.b_start..span.b_end];
+        match span.tag {
+            differ::Tag::Equal => {
+                for line in output {
+                    println!("\t{}", line.dimmed())
+                }
+            }
+            differ::Tag::Insert => {
+                for line in expected {
+                    println!("\t{}", line.red())
+                }
+            }
+            differ::Tag::Delete => {
+                for line in output {
+                    println!("\t{}", line.green())
+                }
+            }
+            differ::Tag::Replace => {
+                if output.len() == expected.len() {
+                    for (&output, &expected) in output.iter().zip(expected) {
+                        let output: Vec<_> = output.chars().collect();
+                        let expected: Vec<_> = expected.chars().collect();
+
+                        print!("\t");
+                        for span in Differ::new(&output, &expected).spans() {
+                            let output = String::from_iter(&output[span.a_start..span.a_end]);
+                            let expected = String::from_iter(&expected[span.b_start..span.b_end]);
+
+                            match span.tag {
+                                differ::Tag::Equal => print!("{}", output.dimmed()),
+                                differ::Tag::Insert => {
+                                    print!("{}", expected.bright_red())
+                                }
+                                differ::Tag::Delete => {
+                                    print!("{}", output.bright_green())
+                                }
+                                differ::Tag::Replace => {
+                                    print!("{}", expected.bright_red());
+                                    print!("{}", output.bright_green());
+                                }
+                            }
+                        }
+
+                        println!()
+                    }
+                } else {
+                    for line in &output[span.a_start..span.a_end] {
+                        println!("-\t{}", line.red())
+                    }
+                    for line in &expected[span.b_start..span.b_end] {
+                        println!("+\t{}", line.green())
+                    }
+                }
+            }
+        }
+    }
 }

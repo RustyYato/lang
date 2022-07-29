@@ -4,7 +4,7 @@ use crate::{
     lexer::{self, TokenKind},
     span::{ByteSpan, Position, Span, TextSpan},
 };
-use derive_ast_node::{AstNode, MaybeAstNode, SerializeTest};
+pub use derive_ast_node::{AstNode, MaybeAstNode, SerializeTest};
 
 pub struct Display<'a, T: ?Sized>(&'a T);
 
@@ -26,6 +26,21 @@ pub trait SerializeTest {
 
     fn to_serialize_string(&self) -> String {
         Display(self).to_string()
+    }
+}
+
+impl<T: SerializeTest> SerializeTest for [T] {
+    fn serialize(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        for a in self {
+            a.serialize(f)?;
+        }
+        Ok(())
+    }
+}
+
+impl<T: SerializeTest> SerializeTest for Vec<T> {
+    fn serialize(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        self.as_slice().serialize(f)
     }
 }
 
