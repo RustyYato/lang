@@ -154,7 +154,7 @@ impl File {
                 path: path.into(),
                 rel_path: Path::new(".").join(path.strip_prefix(root)?),
             })),
-            Some("expected-parse") => Ok(Self::ParseResult((
+            Some("expected-parse" | "expected-parse-errors") => Ok(Self::ParseResult((
                 path.into(),
                 ParseResult { value: read()? },
             ))),
@@ -169,6 +169,15 @@ impl File {
             )),
         }
     }
+}
+
+struct Counts {
+    regened: u32,
+    commited: u32,
+}
+
+trait Output {
+    fn print(&self);
 }
 
 fn main() -> anyhow::Result<()> {
@@ -188,6 +197,8 @@ fn main() -> anyhow::Result<()> {
     path.push("ui");
 
     println!("\n\tCollecting ui tests...");
+
+    let mut print_outputs = Vec::new();
 
     let mut tests = Vec::new();
     let mut results = HashMap::new();
@@ -209,16 +220,21 @@ fn main() -> anyhow::Result<()> {
         }
     }
 
-    println!("\tFound {} test(s)...\n", tests.len().green());
+    println!("\tFound {} test-case(s)...", tests.len().green());
+    print!("\tRunning ui tests...");
 
-    for file in &tests {
+    for (i, file) in tests.iter().enumerate() {
+        if i % 50 == 0 {
+            println!();
+            print!("\t");
+        }
         let mut errors = Vec::new();
         let mut parser = parser::parser::Parser::new(&mut errors, &file.test);
 
-        let output = if file.test.starts_with("# parse_expr") {
+        let output: Box<dyn SerializeTest> = if file.test.starts_with("# parse_expr") {
             parser.consume_ignored_tokens();
             let output = parser.parse_expr();
-            output.to_serialize_string()
+            Box::new(output)
         } else {
             println!(
                 "{}: unknown test kind for {} ({})",
@@ -229,61 +245,102 @@ fn main() -> anyhow::Result<()> {
             continue;
         };
 
-        let output = format(&output, SAVE_TAB);
-
-        let expected_parse = file.path.with_extension("expected-parse");
-        if let Some(result) = results.get(&expected_parse) {
-            let expected = format(&result.value, SAVE_TAB);
-            if expected != output {
-                println!(
-                    "failed test {} ({})",
-                    file.name.bright_red(),
-                    file.rel_path.display().dimmed()
-                );
-                print_diff(&output, &expected);
-            }
-        } else if args.commit {
-            std::fs::write(&expected_parse, output)?;
-        } else {
-            let output = format(&output, TAB);
-            println!(
-                "new parse test {} ({})",
-                file.name.bright_yellow(),
-                file.rel_path.display().dimmed()
-            );
-            println!("{}", output.yellow());
-        }
+        print_outputs.extend(handle_test_case(
+            &args,
+            file,
+            &output,
+            "expected-parse",
+            &results,
+        )?);
 
         if !errors.is_empty() {
-            let output = errors.to_serialize_string();
-            let expected_errors = file.path.with_extension("expected-parse-errors");
-            if let Some(expected_errors) = results.get(&expected_errors) {
-                let expected = format(&expected_errors.value, SAVE_TAB);
-                if expected != output {
-                    println!(
-                        "failed test {} ({})",
-                        file.name.bright_red(),
-                        file.rel_path.display().dimmed()
-                    );
-                    print_diff(&output, &expected);
+            print_outputs.extend(handle_test_case(
+                &args,
+                file,
+                &errors,
+                "expected-parse-errors",
+                &results,
+            )?)
+        }
+    }
+    println!("\n");
+
+    for out in print_outputs {
+        out.print();
+    }
+
+    Ok(())
+}
+
+fn handle_test_case(
+    args: &Args,
+    file: &Test,
+    output: &dyn SerializeTest,
+    extension: &str,
+    results: &HashMap<PathBuf, ParseResult>,
+) -> anyhow::Result<Option<Box<dyn Output>>> {
+    let output = output.to_serialize_string();
+    let output = format(&output, SAVE_TAB);
+
+    let expected_errors = file.path.with_extension(extension);
+    if let Some(expected_errors) = results.get(&expected_errors) {
+        let expected = format(&expected_errors.value, SAVE_TAB);
+        if expected != output {
+            struct FailedTest {
+                message: String,
+                output: String,
+                expected: String,
+            }
+
+            impl Output for FailedTest {
+                fn print(&self) {
+                    println!("{}", self.message);
+                    print_diff(&self.output, &self.expected);
                 }
-            } else if args.commit {
-                std::fs::write(&expected_errors, output)?;
-            } else {
-                let output = format(&output, TAB);
-                println!(
-                    "new errors test {} ({})",
-                    file.name.bright_yellow(),
-                    file.rel_path.display().dimmed()
-                );
+            }
+
+            print!("{}", "F".red());
+
+            return Ok(Some(Box::new(FailedTest {
+                message: format!(
+                    "failed test {} ({})",
+                    file.name.bright_red(),
+                    file.rel_path.display().dimmed(),
+                ),
+                output,
+                expected,
+            })));
+        } else {
+            print!("{}", ".".green());
+        }
+    } else if args.commit {
+        print!("{}", "C".bright_yellow());
+        std::fs::write(&expected_errors, output)?;
+    } else {
+        print!("{}", "+".bright_yellow());
+        struct NewTest {
+            message: String,
+            output: String,
+        }
+
+        impl Output for NewTest {
+            fn print(&self) {
+                let output = format(&self.output, TAB);
+                println!("{}", self.message);
                 println!("{}", output.yellow());
             }
         }
+
+        return Ok(Some(Box::new(NewTest {
+            message: format!(
+                "new errors test {} ({})",
+                file.name.bright_yellow(),
+                file.rel_path.display().dimmed()
+            ),
+            output,
+        })));
     }
-
-    println!();
-
-    Ok(())
+    Ok(None)
 }
 
 fn print_diff(output: &str, expected: &str) {
@@ -301,7 +358,7 @@ fn print_diff(output: &str, expected: &str) {
             }
             differ::Tag::Insert => {
                 for line in expected {
-                    println!("\t{}", line.red())
+                    println!("\t{}", line.red().on_red())
                 }
             }
             differ::Tag::Delete => {
@@ -323,14 +380,30 @@ fn print_diff(output: &str, expected: &str) {
                             match span.tag {
                                 differ::Tag::Equal => print!("{}", output.dimmed()),
                                 differ::Tag::Insert => {
-                                    print!("{}", expected.bright_red())
+                                    if expected.contains(char::is_whitespace) {
+                                        print!("{}", expected.black().on_bright_red())
+                                    } else {
+                                        print!("{}", expected.bright_red())
+                                    }
                                 }
                                 differ::Tag::Delete => {
-                                    print!("{}", output.bright_green())
+                                    if output.contains(char::is_whitespace) {
+                                        print!("{}", output.black().on_bright_green())
+                                    } else {
+                                        print!("{}", output.bright_green())
+                                    }
                                 }
                                 differ::Tag::Replace => {
-                                    print!("{}", expected.bright_red());
-                                    print!("{}", output.bright_green());
+                                    if expected.contains(char::is_whitespace) {
+                                        print!("{}", expected.black().on_bright_red())
+                                    } else {
+                                        print!("{}", expected.bright_red())
+                                    }
+                                    if output.contains(char::is_whitespace) {
+                                        print!("{}", output.black().on_bright_green())
+                                    } else {
+                                        print!("{}", output.bright_green())
+                                    }
                                 }
                             }
                         }

@@ -1,0 +1,10 @@
+Expr
+   InfixExpr
+      Expr
+         Integer @ b13..b16 / 2:1..2:4 / valid=true = "100"
+         ignore b16..b17 / 2:4..2:5 
+            WhiteSpace @ b16..b17 / 2:4..2:5 = " "
+      InfixOp
+         Plus @ b17..b18 / 2:5..2:6 / valid=true = "+"
+      Expr
+         b18..b18 / 2:6..2:6
