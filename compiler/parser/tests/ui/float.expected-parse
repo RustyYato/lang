@@ -1,0 +1,2 @@
+Expr
+   FloatLiteral @ b13..b18 / 2:1..2:6 / valid=true = "100.0"
