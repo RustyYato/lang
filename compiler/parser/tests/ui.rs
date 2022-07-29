@@ -394,26 +394,40 @@ fn handle_test_case(
 }
 
 fn print_diff(output: &str, expected: &str) {
-    let output: Vec<_> = output.lines().collect();
-    let expected: Vec<_> = expected.lines().collect();
+    let (output_tabs, output): (Vec<_>, Vec<_>) = output
+        .lines()
+        .map(|s: &str| match s.find(|c: char| c != ' ') {
+            Some(i) => s.split_at(i),
+            None => ("", s),
+        })
+        .unzip();
+    let (expected_tabs, expected): (Vec<_>, Vec<_>) = expected
+        .lines()
+        .map(|s: &str| match s.find(|c: char| c != ' ') {
+            Some(i) => s.split_at(i),
+            None => ("", s),
+        })
+        .unzip();
 
     for span in Differ::new(&output, &expected).spans() {
         let output = &output[span.a_start..span.a_end];
         let expected = &expected[span.b_start..span.b_end];
+        let output_tabs = &output_tabs[span.a_start..span.a_end];
+        let expected_tabs = &expected_tabs[span.b_start..span.b_end];
         match span.tag {
             differ::Tag::Equal => {
-                for output in output {
-                    println!("\t{}", output.dimmed())
+                for (output, output_tabs) in output.iter().zip(output_tabs) {
+                    println!("\t{output_tabs}{}", output.dimmed())
                 }
             }
             differ::Tag::Insert => {
-                for expected in expected {
-                    println!("\t{}", expected.red())
+                for (expected, expected_tabs) in expected.iter().zip(expected_tabs) {
+                    println!("\t{expected_tabs}{}", expected.red())
                 }
             }
             differ::Tag::Delete => {
-                for output in output {
-                    println!("\t{}", output.green())
+                for (output, output_tabs) in output.iter().zip(output_tabs) {
+                    println!("\t{output_tabs}{}", output.green())
                 }
             }
             differ::Tag::Replace => {
@@ -422,20 +436,25 @@ fn print_diff(output: &str, expected: &str) {
                 };
 
                 if output.len() == expected.len() {
-                    for (&output, &expected) in output.iter().zip(expected) {
-                        let output_s = &output;
-                        let expected_s = &expected;
+                    for (((output, &expected), output_tabs), expected_tabs) in output
+                        .iter()
+                        .zip(expected)
+                        .zip(output_tabs)
+                        .zip(expected_tabs)
+                    {
+                        let output_s = output;
+                        let expected_s = expected;
                         let output: Vec<_> = output.chars().collect();
                         let expected: Vec<_> = expected.chars().collect();
 
-                        print!("\t");
+                        print!("\t{output_tabs}");
 
                         let spans = Differ::new(&output, &expected).spans();
 
                         if spans.len() > 10 {
                             // if the two lines are very different, then fallback to just showing liens
                             println!("{}", expected_s.red());
-                            println!("\t{}", output_s.green());
+                            println!("\t{expected_tabs}{}", output_s.green());
                             continue;
                         }
 
@@ -480,8 +499,8 @@ fn print_diff(output: &str, expected: &str) {
                     for expected in expected {
                         println!("\t{}", expected.red())
                     }
-                    for output in output {
-                        println!("\t{}", output.green())
+                    for (output, output_tabs) in output.iter().zip(output_tabs) {
+                        println!("\t{output_tabs}{}", output.green())
                     }
                 }
             }
