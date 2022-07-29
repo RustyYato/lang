@@ -1,0 +1,2 @@
+Expr
+   Integer @ b13..b16 / 2:1..2:4 / valid=true = "100"
