@@ -34,6 +34,12 @@ impl ErrorReporter for Vec<Error> {
 pub enum Error {
     #[error("Expected expr at {:?}, but found {found:?}", .span.text)]
     ExpectedExpr { found: TokenKind, span: Spans },
+    #[error("Expected {expected:?} at {:?}, but found {found:?}", .span.text)]
+    UnexpectedToken {
+        found: TokenKind,
+        expected: TokenKind,
+        span: Spans,
+    },
 }
 
 impl SerializeTest for Error {
@@ -43,6 +49,17 @@ impl SerializeTest for Error {
             Error::ExpectedExpr { found, span } => {
                 write!(f, "ExpectedExpr({:?},{},)", found, span.display_serialize())?
             }
+            Error::UnexpectedToken {
+                expected,
+                found,
+                span,
+            } => write!(
+                f,
+                "UnexpectedToken({:?},{:?},{},)",
+                expected,
+                found,
+                span.display_serialize()
+            )?,
         }
         write!(f, ")")
     }
@@ -120,6 +137,11 @@ impl<'a, 'text> Parser<'a, 'text> {
     pub fn parse_ident(&mut self) -> ast::Ident<'text> {
         let (kind, info) = self.next_token();
         if kind < TokenKind::BasicIdent {
+            self.errors.report(Error::UnexpectedToken {
+                found: kind,
+                expected: TokenKind::BasicIdent,
+                span: info.span,
+            });
             ast::Ident { id: None, info }
         } else {
             self.ident_id += 1;
@@ -145,10 +167,16 @@ impl<'a, 'text> Parser<'a, 'text> {
 
     pub fn parse_token<const TOKEN_KIND: u8>(&mut self) -> ast::Token<'text, TOKEN_KIND> {
         let (kind, info) = self.next_token();
-        ast::Token {
-            valid: kind as u8 == TOKEN_KIND,
-            info,
+        let valid = kind as u8 == TOKEN_KIND;
+        if !valid {
+            let expected = ast::Token::<TOKEN_KIND>::TOKEN_KIND;
+            self.errors.report(Error::UnexpectedToken {
+                found: kind,
+                expected,
+                span: info.span,
+            })
         }
+        ast::Token { valid, info }
     }
 
     pub fn try_parse_token<const TOKEN_KIND: u8>(

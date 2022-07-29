@@ -246,7 +246,7 @@ impl SerializeTest for bool {
 }
 
 impl<const TOKEN_KIND: u8> Token<'_, TOKEN_KIND> {
-    const TOKEN_KIND: TokenKind = crate::lexer::TOKEN_KINDS[TOKEN_KIND as usize];
+    pub const TOKEN_KIND: TokenKind = crate::lexer::TOKEN_KINDS[TOKEN_KIND as usize];
 }
 
 fn serialize_ignored(
