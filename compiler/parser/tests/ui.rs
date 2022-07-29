@@ -253,15 +253,13 @@ fn main() -> anyhow::Result<()> {
             &results,
         )?);
 
-        if !errors.is_empty() {
-            print_outputs.extend(handle_test_case(
-                &args,
-                file,
-                &errors,
-                "expected-parse-errors",
-                &results,
-            )?)
-        }
+        print_outputs.extend(handle_test_case(
+            &args,
+            file,
+            &errors,
+            "expected-parse-errors",
+            &results,
+        )?)
     }
     println!("\n");
 
@@ -282,8 +280,8 @@ fn handle_test_case(
     let output = output.to_serialize_string();
     let output = format(&output, SAVE_TAB);
 
-    let expected_errors = file.path.with_extension(extension);
-    if let Some(expected_errors) = results.get(&expected_errors) {
+    let expected_path = file.path.with_extension(extension);
+    if let Some(expected_errors) = results.get(&expected_path) {
         let expected = format(&expected_errors.value, SAVE_TAB);
         if expected != output {
             struct FailedTest {
@@ -299,23 +297,29 @@ fn handle_test_case(
                 }
             }
 
-            print!("{}", "F".red());
+            if args.regen {
+                print!("{}", "R".magenta());
 
-            return Ok(Some(Box::new(FailedTest {
-                message: format!(
-                    "failed test {} ({})",
-                    file.name.bright_red(),
-                    file.rel_path.display().dimmed(),
-                ),
-                output,
-                expected,
-            })));
+                std::fs::write(&expected_path, output)?;
+            } else {
+                print!("{}", "F".red());
+
+                return Ok(Some(Box::new(FailedTest {
+                    message: format!(
+                        "failed test {} ({})",
+                        file.name.bright_red(),
+                        file.rel_path.display().dimmed(),
+                    ),
+                    output,
+                    expected,
+                })));
+            }
         } else {
             print!("{}", ".".green());
         }
     } else if args.commit {
         print!("{}", "C".bright_yellow());
-        std::fs::write(&expected_errors, output)?;
+        std::fs::write(&expected_path, output)?;
     } else {
         print!("{}", "+".bright_yellow());
         struct NewTest {
@@ -358,7 +362,7 @@ fn print_diff(output: &str, expected: &str) {
             }
             differ::Tag::Insert => {
                 for line in expected {
-                    println!("\t{}", line.red().on_red())
+                    println!("\t{}", line.red())
                 }
             }
             differ::Tag::Delete => {
@@ -411,11 +415,11 @@ fn print_diff(output: &str, expected: &str) {
                         println!()
                     }
                 } else {
-                    for line in &output[span.a_start..span.a_end] {
-                        println!("-\t{}", line.red())
+                    for line in expected {
+                        println!("\t{}", line.red())
                     }
-                    for line in &expected[span.b_start..span.b_end] {
-                        println!("+\t{}", line.green())
+                    for line in output {
+                        println!("\t{}", line.green())
                     }
                 }
             }
