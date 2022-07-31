@@ -159,6 +159,7 @@ impl<'text> Lexer<'text> {
                 col_offset = Some(0);
                 TokenKind::WhiteSpace
             }
+            '=' => TokenKind::Eq,
             '+' => TokenKind::Plus,
             '-' => TokenKind::Hyphen,
             '*' => TokenKind::Star,
@@ -245,6 +246,7 @@ impl<'text> Lexer<'text> {
 
         if kind == TokenKind::BasicIdent {
             kind = match text {
+                "let" => TokenKind::Let,
                 "if" => TokenKind::If,
                 "else" => TokenKind::Else,
                 "loop" => TokenKind::Loop,
