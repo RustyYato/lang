@@ -1,2 +1,9 @@
+TokenList
+   Tokens
+      LineComment @ b0..b12 / 1:1..1:13 = "# parse_expr"
+      WhiteSpace @ b12..b13 / 1:13..2:1 = "\n"
+      ExpFloat @ b13..b19 / 2:1..2:7 = "100e10"
+   Ignored
+      2..2
 Expr
-   FloatLiteral @ b13..b19 / 2:1..2:7 / valid=true = "100e10"
+   FloatLiteral tok.3 valid=true

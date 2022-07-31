@@ -1,2 +1,9 @@
+TokenList
+   Tokens
+      LineComment @ b0..b12 / 1:1..1:13 = "# parse_expr"
+      WhiteSpace @ b12..b13 / 1:13..2:1 = "\n"
+      Dot @ b13..b14 / 2:1..2:2 = "."
+   Ignored
+      2..2
 Expr
-   b14..b14 / 2:2..2:2
+   MissingExpr

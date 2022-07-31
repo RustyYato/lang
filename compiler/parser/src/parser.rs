@@ -1,5 +1,5 @@
 use crate::{
-    ast::{self, Spans},
+    ast::{self, Spans, TokenId, TokenList},
     lexer::{self, Lexer, TokenKind},
     span::{BytePos, ByteSpan, TextPos, TextSpan},
 };
@@ -12,7 +12,7 @@ pub struct Parser<'a, 'text> {
     ident_id: u32,
     last_ignore_spans: Spans,
     errors: &'a mut dyn ErrorReporter,
-    keep_ignored_tokens: bool,
+    token_list: TokenList<'text>,
 }
 
 pub trait ErrorReporter {
@@ -85,9 +85,9 @@ impl<'a, 'text> Parser<'a, 'text> {
     pub fn new(errors: &'a mut dyn ErrorReporter, text: &'text str) -> Self {
         Self {
             lexer: Lexer::new(text),
-            keep_ignored_tokens: true,
             ident_id: 0,
             errors,
+            token_list: TokenList::new(),
             last_ignore_spans: Spans {
                 byte: ByteSpan {
                     start: BytePos { pos: 0 },
@@ -101,8 +101,13 @@ impl<'a, 'text> Parser<'a, 'text> {
         }
     }
 
+    pub fn finish(self) -> TokenList<'text> {
+        self.token_list
+    }
+
     pub fn hide_ignored_tokens(&mut self) -> &mut Self {
-        self.keep_ignored_tokens = false;
+        assert!(self.token_list.is_empty());
+        self.token_list = TokenList::new_drop_ignored();
         self
     }
 
@@ -114,94 +119,116 @@ impl<'a, 'text> Parser<'a, 'text> {
         self.lexer.clone().lex()
     }
 
-    pub fn next_token(&mut self) -> (TokenKind, ast::TokenInfo<'text>) {
+    pub fn next_token(&mut self) -> (TokenKind, TokenId) {
         let token = self.lexer.lex();
         let ignored = self.consume_ignored_tokens();
-        (
-            token.kind,
+        let tok_id = self.token_list.push(
             ast::TokenInfo {
+                kind: token.kind,
                 text: token.text,
                 span: token.span,
-                ignored,
             },
-        )
+            ignored,
+        );
+        (token.kind, tok_id)
     }
 
-    pub fn consume_ignored_tokens(&mut self) -> ast::Ignored<'text> {
+    pub fn consume_ignored_tokens(&mut self) -> ast::Ignored {
         let start = self.lexer.pos();
-        let mut tokens = Vec::new();
-        while matches!(self.peek(), TokenKind::WhiteSpace | TokenKind::LineComment) {
+        let tok_start = self.token_list.len();
+        loop {
+            let lexer = self.lexer.clone();
             let token = self.lexer.lex();
-            if self.keep_ignored_tokens {
-                tokens.push(token);
+
+            if matches!(token.kind, TokenKind::WhiteSpace | TokenKind::LineComment) {
+                self.token_list.push_ignored(ast::TokenInfo {
+                    kind: token.kind,
+                    text: token.text,
+                    span: token.span,
+                })
+            } else {
+                self.lexer = lexer;
+                break;
             }
         }
         let end = self.lexer.pos();
         self.last_ignore_spans = start.to(end);
-        ast::Ignored::new(tokens, start.to(end))
+        let tok_end = self.token_list.len();
+        ast::Ignored {
+            items: tok_start..tok_end,
+        }
     }
 
-    pub fn parse_ident(&mut self) -> ast::Ident<'text> {
-        let (kind, info) = self.next_token();
+    pub fn parse_ident(&mut self) -> ast::Ident {
+        let (kind, tok_id) = self.next_token();
+        let name = ustr::ustr(self.token_list[tok_id].text);
         if kind < TokenKind::BasicIdent {
             self.errors.report(Error::UnexpectedToken {
                 found: kind,
                 expected: TokenKind::BasicIdent,
-                span: info.span,
+                span: self.token_list[tok_id].span,
             });
-            ast::Ident { id: None, info }
+            ast::Ident {
+                name,
+                id: None,
+                tok_id,
+            }
         } else {
             self.ident_id += 1;
             ast::Ident {
+                name,
                 id: Some(ast::IdentId::new(self.ident_id)),
-                info,
+                tok_id,
             }
         }
     }
 
-    pub fn try_parse_ident(&mut self) -> Option<ast::Ident<'text>> {
+    pub fn try_parse_ident(&mut self) -> Option<ast::Ident> {
         if self.peek() < TokenKind::BasicIdent {
             None
         } else {
-            let (_, info) = self.next_token();
+            let (_, tok_id) = self.next_token();
+            let name = ustr::ustr(self.token_list[tok_id].text);
             self.ident_id += 1;
             Some(ast::Ident {
+                name,
                 id: Some(ast::IdentId::new(self.ident_id)),
-                info,
+                tok_id,
             })
         }
     }
 
-    pub fn parse_token<const TOKEN_KIND: u8>(&mut self) -> ast::Token<'text, TOKEN_KIND> {
-        let (kind, info) = self.next_token();
+    pub fn parse_token<const TOKEN_KIND: u8>(&mut self) -> ast::Token<TOKEN_KIND> {
+        let (kind, tok_id) = self.next_token();
         let valid = kind as u8 == TOKEN_KIND;
         if !valid {
             let expected = ast::Token::<TOKEN_KIND>::TOKEN_KIND;
             self.errors.report(Error::UnexpectedToken {
                 found: kind,
                 expected,
-                span: info.span,
+                span: self.token_list[tok_id].span,
             })
         }
-        ast::Token { valid, info }
+        ast::Token { valid, tok_id }
     }
 
-    pub fn try_parse_token<const TOKEN_KIND: u8>(
-        &mut self,
-    ) -> Option<ast::Token<'text, TOKEN_KIND>> {
+    pub fn try_parse_token<const TOKEN_KIND: u8>(&mut self) -> Option<ast::Token<TOKEN_KIND>> {
         if self.peek() as u8 == TOKEN_KIND {
-            let (_, info) = self.next_token();
-            Some(ast::Token { valid: true, info })
+            let (_, tok_id) = self.next_token();
+            Some(ast::Token {
+                valid: true,
+                tok_id,
+            })
         } else {
             None
         }
     }
 
-    pub fn parse_expr(&mut self) -> ast::Expr<'text> {
+    pub fn parse_expr(&mut self) -> ast::Expr {
         self.parse_expr_in(ExprPrec::Expr)
     }
 
-    fn parse_expr_in(&mut self, prec: ExprPrec) -> ast::Expr<'text> {
+    fn parse_expr_in(&mut self, prec: ExprPrec) -> ast::Expr {
         let mut expr = self.parse_basic_expr();
 
         while let Some((op_kind, before, after)) = self.peek_expr_op(prec) {
@@ -215,7 +242,7 @@ impl<'a, 'text> Parser<'a, 'text> {
         expr
     }
 
-    pub fn parse_stmt(&mut self) -> ast::StmtLet<'text> {
+    pub fn parse_stmt(&mut self) -> ast::StmtLet {
         ast::StmtLet {
             let_tok: self.parse_token(),
             name: self.parse_ident(),
@@ -224,7 +251,7 @@ impl<'a, 'text> Parser<'a, 'text> {
         }
     }
 
-    pub fn parse_let_stmt(&mut self) -> ast::StmtLet<'text> {
+    pub fn parse_let_stmt(&mut self) -> ast::StmtLet {
         ast::StmtLet {
             let_tok: self.parse_token(),
             name: self.parse_ident(),
@@ -243,30 +270,30 @@ impl<'a, 'text> Parser<'a, 'text> {
         })
     }
 
-    pub fn parse_basic_expr(&mut self) -> ast::Expr<'text> {
+    pub fn parse_basic_expr(&mut self) -> ast::Expr {
         match self.peek() {
             token if token >= TokenKind::BasicIdent => ast::Expr::Ident(self.parse_ident()),
 
             TokenKind::Integer => ast::Expr::IntegerLiteral(self.parse_token()),
             TokenKind::SimpleFloat => {
-                let token: Token![SimpleFloat<'_>] = self.parse_token();
+                let token: Token![SimpleFloat] = self.parse_token();
                 ast::Expr::FloatLiteral(ast::FloatLiteral {
                     valid: token.valid,
-                    info: token.info,
+                    tok_id: token.tok_id,
                 })
             }
             TokenKind::ExpFloat => {
-                let token: Token![ExpFloat<'_>] = self.parse_token();
+                let token: Token![ExpFloat] = self.parse_token();
                 ast::Expr::FloatLiteral(ast::FloatLiteral {
                     valid: token.valid,
-                    info: token.info,
+                    tok_id: token.tok_id,
                 })
             }
             TokenKind::SciFloat => {
-                let token: Token![SciFloat<'_>] = self.parse_token();
+                let token: Token![SciFloat] = self.parse_token();
                 ast::Expr::FloatLiteral(ast::FloatLiteral {
                     valid: token.valid,
-                    info: token.info,
+                    tok_id: token.tok_id,
                 })
             }
 
@@ -285,7 +312,7 @@ impl<'a, 'text> Parser<'a, 'text> {
                     found,
                     span: self.last_ignore_spans,
                 });
-                ast::Expr::Missing(self.last_ignore_spans)
+                ast::Expr::Missing(ast::MissingExpr)
             }
 
             TokenKind::BasicIdent => unreachable!(),
@@ -310,19 +337,14 @@ impl<'a, 'text> Parser<'a, 'text> {
                 let (_, token) = self.next_token();
                 self.errors.report(Error::ExpectedExpr {
                     found,
-                    span: token.span,
+                    span: self.token_list[token].span,
                 });
-                ast::Expr::Missing(self.last_ignore_spans)
+                ast::Expr::Missing(ast::MissingExpr)
             }
         }
     }
 
-    fn finish_expr(
-        &mut self,
-        expr: ast::Expr<'text>,
-        op_kind: OpKind,
-        prec: ExprPrec,
-    ) -> ast::Expr<'text> {
+    fn finish_expr(&mut self, expr: ast::Expr, op_kind: OpKind, prec: ExprPrec) -> ast::Expr {
         match op_kind {
             OpKind::Add => {
                 let token = self.parse_token();

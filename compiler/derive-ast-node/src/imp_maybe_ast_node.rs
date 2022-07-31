@@ -33,15 +33,15 @@ fn derive_ast_node_struct(ty: syn::DeriveInput) -> TokenStream {
         imp::StructFields::Spans(spans) => quote! {
             #[automatically_derived]
             impl #impl_generics MaybeAstNode for #name #ty_generics #where_clause  {
-                fn try_span<SpanPos: Position>(&self) -> Option<Span<SpanPos>>  {
+                fn try_span(&self) -> Option<RangeInclusive<TokenId>>  {
                     Some(SpanPos::span(&self.#spans))
                 }
 
-                fn try_start<SpanPos: Position>(&self) -> Option<SpanPos> {
+                fn try_start(&self) -> Option<TokenId> {
                     Some(SpanPos::start(&self.#spans))
                 }
 
-                fn try_end<SpanPos: Position>(&self) -> Option<SpanPos> {
+                fn try_end(&self) -> Option<TokenId> {
                     Some(SpanPos::end(&self.#spans))
                 }
             }
@@ -57,7 +57,7 @@ fn derive_ast_node_struct(ty: syn::DeriveInput) -> TokenStream {
             quote! {
                 #[automatically_derived]
                 impl #impl_generics MaybeAstNode for #name #ty_generics #where_clause  {
-                    fn try_start<SpanPos: Position>(&self) -> Option<SpanPos> {
+                    fn try_start(&self) -> Option<TokenId> {
                         #(
                             if let Some(start) = MaybeAstNode::try_start(&self.#fields) {
                                 return start
@@ -67,7 +67,7 @@ fn derive_ast_node_struct(ty: syn::DeriveInput) -> TokenStream {
                         None
                     }
 
-                    fn try_end<SpanPos: Position>(&self) -> Option<SpanPos> {
+                    fn try_end(&self) -> Option<TokenId> {
                         #(
                             if let Some(end) = MaybeAstNode::try_end(&self.#rev_fields) {
                                 return end
@@ -90,12 +90,12 @@ fn derive_ast_node_struct(ty: syn::DeriveInput) -> TokenStream {
             let fields = &fields[..=start_finish];
 
             let (start_finish, fields) = fields.split_last().unwrap();
-            let (end_finish, rev_fields) = rev_fields.split_first().unwrap();
+            let (end_finish, rev_fields) = rev_fields.split_last().unwrap();
 
             quote! {
                 #[automatically_derived]
                 impl #impl_generics MaybeAstNode for #name #ty_generics #where_clause  {
-                    fn try_start<SpanPos: Position>(&self) -> Option<SpanPos> {
+                    fn try_start(&self) -> Option<TokenId> {
                         #(
                             if let Some(start) = MaybeAstNode::try_start(&self.#fields) {
                                 return Some(start)
@@ -105,7 +105,7 @@ fn derive_ast_node_struct(ty: syn::DeriveInput) -> TokenStream {
                         Some(AstNode::start(&self.#start_finish))
                     }
 
-                    fn try_end<SpanPos: Position>(&self) -> Option<SpanPos> {
+                    fn try_end(&self) -> Option<TokenId> {
                         #(
                             if let Some(end) = MaybeAstNode::try_end(&self.#rev_fields) {
                                 return Some(end)
@@ -164,19 +164,19 @@ fn derive_ast_node_enum(ty: syn::DeriveInput) -> TokenStream {
     quote! {
         #[automatically_derived]
         impl #impl_generics MaybeAstNode for #name #ty_generics #where_clause {
-            fn try_span<T: Position>(&self) -> Option<Span<T>> {
+            fn try_span(&self) -> Option<RangeInclusive<TokenId>> {
                 match self {
                     #(Self::#variant_names(inner) => MaybeAstNode::try_span(inner),)*
                 }
             }
 
-            fn try_start<T: Position>(&self) -> Option<T> {
+            fn try_start(&self) -> Option<TokenId> {
                 match self {
                     #(Self::#variant_names(inner) => MaybeAstNode::try_start(inner),)*
                 }
             }
 
-            fn try_end<T: Position>(&self) -> Option<T> {
+            fn try_end(&self) -> Option<TokenId> {
                 match self {
                     #(Self::#variant_names(inner) => MaybeAstNode::try_end(inner),)*
                 }

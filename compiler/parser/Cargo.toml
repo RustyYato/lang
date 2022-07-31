@@ -9,6 +9,7 @@ edition = "2021"
 unicode-xid = '0.2'
 memchr = '2'
 thiserror = '1'
+ustr = '0.9'
 
 derive-ast-node = { path = '../derive-ast-node' }
 

@@ -33,15 +33,15 @@ fn derive_ast_node_struct(ty: syn::DeriveInput) -> TokenStream {
         imp::StructFields::Spans(spans) => quote! {
             #[automatically_derived]
             impl #impl_generics AstNode for #name #ty_generics #where_clause  {
-                fn span<SpanPos: Position>(&self) -> Span<SpanPos>  {
+                fn span(&self) -> RangeInclusive<TokenId>  {
                     SpanPos::span(&self.#spans)
                 }
 
-                fn start<SpanPos: Position>(&self) -> SpanPos {
+                fn start(&self) -> TokenId {
                     SpanPos::start(&self.#spans)
                 }
 
-                fn end<SpanPos: Position>(&self) -> SpanPos {
+                fn end(&self) -> TokenId {
                     SpanPos::end(&self.#spans)
                 }
             }
@@ -66,12 +66,12 @@ fn derive_ast_node_struct(ty: syn::DeriveInput) -> TokenStream {
             let fields = &fields[..=start_finish];
 
             let (start_finish, fields) = fields.split_last().unwrap();
-            let (end_finish, rev_fields) = rev_fields.split_first().unwrap();
+            let (end_finish, rev_fields) = rev_fields.split_last().unwrap();
 
             quote! {
                 #[automatically_derived]
                 impl #impl_generics AstNode for #name #ty_generics #where_clause  {
-                    fn start<SpanPos: Position>(&self) -> SpanPos {
+                    fn start(&self) -> TokenId {
                         #(
                             if let Some(start) = MaybeAstNode::try_start(&self.#fields) {
                                 return start
@@ -81,7 +81,7 @@ fn derive_ast_node_struct(ty: syn::DeriveInput) -> TokenStream {
                         AstNode::start(&self.#start_finish)
                     }
 
-                    fn end<SpanPos: Position>(&self) -> SpanPos {
+                    fn end(&self) -> TokenId {
                         #(
                             if let Some(end) = MaybeAstNode::try_end(&self.#rev_fields) {
                                 return end
@@ -140,19 +140,19 @@ fn derive_ast_node_enum(ty: syn::DeriveInput) -> TokenStream {
     quote! {
         #[automatically_derived]
         impl #impl_generics AstNode for #name #ty_generics #where_clause {
-            fn span<T: Position>(&self) -> Span<T> {
+            fn span(&self) -> RangeInclusive<TokenId> {
                 match self {
                     #(Self::#variant_names(inner) => AstNode::span(inner),)*
                 }
             }
 
-            fn start<T: Position>(&self) -> T {
+            fn start(&self) -> TokenId {
                 match self {
                     #(Self::#variant_names(inner) => AstNode::start(inner),)*
                 }
             }
 
-            fn end<T: Position>(&self) -> T {
+            fn end(&self) -> TokenId {
                 match self {
                     #(Self::#variant_names(inner) => AstNode::end(inner),)*
                 }

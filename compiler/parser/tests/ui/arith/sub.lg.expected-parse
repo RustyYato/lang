@@ -1,12 +1,21 @@
+TokenList
+   Tokens
+      LineComment @ b0..b12 / 1:1..1:13 = "# parse_expr"
+      WhiteSpace @ b12..b13 / 1:13..2:1 = "\n"
+      WhiteSpace @ b14..b15 / 2:2..2:3 = " "
+      BasicIdent @ b13..b14 / 2:1..2:2 = "a"
+      WhiteSpace @ b16..b17 / 2:4..2:5 = " "
+      Hyphen @ b15..b16 / 2:3..2:4 = "-"
+      BasicIdent @ b17..b18 / 2:5..2:6 = "b"
+   Ignored
+      2..3
+      4..5
+      6..6
 Expr
    InfixExpr
       Expr
-         "a" <ident.1> @ b13..b14 / 2:1..2:2
-         ignore b14..b15 / 2:2..2:3 
-            WhiteSpace @ b14..b15 / 2:2..2:3 = " "
+         Ident a ident.1 tok.4
       InfixOp
-         Hyphen @ b15..b16 / 2:3..2:4 / valid=true = "-"
-         ignore b16..b17 / 2:4..2:5 
-            WhiteSpace @ b16..b17 / 2:4..2:5 = " "
+         Hyphen tok.6 valid=true
       Expr
-         "b" <ident.2> @ b17..b18 / 2:5..2:6
+         Ident b ident.2 tok.7

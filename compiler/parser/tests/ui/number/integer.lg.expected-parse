@@ -1,2 +1,9 @@
+TokenList
+   Tokens
+      LineComment @ b0..b12 / 1:1..1:13 = "# parse_expr"
+      WhiteSpace @ b12..b13 / 1:13..2:1 = "\n"
+      Integer @ b13..b16 / 2:1..2:4 = "100"
+   Ignored
+      2..2
 Expr
-   Integer @ b13..b16 / 2:1..2:4 / valid=true = "100"
+   Integer tok.3 valid=true

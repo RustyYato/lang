@@ -12,10 +12,11 @@ use walkdir::WalkDir;
 
 #[derive(Debug, clap::Parser)]
 struct Args {
-    #[clap(env)]
+    #[clap(long, short, env)]
     regen: bool,
-    #[clap(env)]
+    #[clap(long, short, env)]
     commit: bool,
+    filter: Option<String>,
 }
 
 const TAB: &str = ".  ";
@@ -205,7 +206,11 @@ trait Output {
 }
 
 fn main() -> anyhow::Result<()> {
-    let args @ Args { regen, commit } = clap::Parser::parse();
+    let args @ Args {
+        regen,
+        commit,
+        filter: _,
+    } = clap::Parser::parse();
 
     let a = std::time::Instant::now();
 
@@ -238,7 +243,15 @@ fn main() -> anyhow::Result<()> {
         }
 
         match File::load(&path, entry.path()) {
-            Ok(File::Test(test)) => tests.push(test),
+            Ok(File::Test(test)) => {
+                if let Some(filter) = args.filter.as_deref() {
+                    if test.name.contains(filter) {
+                        tests.push(test)
+                    }
+                } else {
+                    tests.push(test)
+                }
+            }
             Ok(File::ParseResult((path, result))) => {
                 results.insert(path, result);
             }
@@ -263,7 +276,7 @@ fn main() -> anyhow::Result<()> {
         let output: Box<dyn SerializeTest> = if file.test.starts_with("# parse_expr") {
             parser.consume_ignored_tokens();
             let output = parser.parse_expr();
-            Box::new(output)
+            Box::new((parser.finish(), output))
         } else {
             println!(
                 "{}: unknown test kind for {} ({})",

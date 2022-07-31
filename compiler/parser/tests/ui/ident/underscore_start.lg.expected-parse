@@ -1,2 +1,9 @@
+TokenList
+   Tokens
+      LineComment @ b0..b12 / 1:1..1:13 = "# parse_expr"
+      WhiteSpace @ b12..b13 / 1:13..2:1 = "\n"
+      BasicIdent @ b13..b52 / 2:1..2:40 = "_some_ident_that_starts_with_underscore"
+   Ignored
+      2..2
 Expr
-   "_some_ident_that_starts_with_underscore" <ident.1> @ b13..b52 / 2:1..2:40
+   Ident _some_ident_that_starts_with_underscore ident.1 tok.3
