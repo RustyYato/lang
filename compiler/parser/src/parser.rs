@@ -329,7 +329,6 @@ impl<'a, 'text> Parser<'a, 'text> {
             | TokenKind::Eq
             | TokenKind::Let
             | TokenKind::Match
-            | TokenKind::If
             | TokenKind::Else
             | TokenKind::Loop
             | TokenKind::Break
@@ -344,39 +343,36 @@ impl<'a, 'text> Parser<'a, 'text> {
         }
     }
 
+    fn finish_expr_infix(
+        &mut self,
+        left: ast::Expr,
+        op: ast::InfixOp,
+        prec: ExprPrec,
+    ) -> ast::Expr {
+        ast::Expr::Infix(Box::new(ast::ExprInfix {
+            left,
+            op,
+            right: self.parse_expr_in(prec),
+        }))
+    }
+
     fn finish_expr(&mut self, expr: ast::Expr, op_kind: OpKind, prec: ExprPrec) -> ast::Expr {
         match op_kind {
             OpKind::Add => {
-                let token = self.parse_token();
-                ast::Expr::Infix(Box::new(ast::InfixExpr {
-                    left: expr,
-                    op: ast::InfixOp::Add(token),
-                    right: self.parse_expr_in(prec),
-                }))
+                let op = ast::InfixOp::Add(self.parse_token());
+                self.finish_expr_infix(expr, op, prec)
             }
             OpKind::Sub => {
-                let token = self.parse_token();
-                ast::Expr::Infix(Box::new(ast::InfixExpr {
-                    left: expr,
-                    op: ast::InfixOp::Sub(token),
-                    right: self.parse_expr_in(prec),
-                }))
+                let op = ast::InfixOp::Sub(self.parse_token());
+                self.finish_expr_infix(expr, op, prec)
             }
             OpKind::Mul => {
-                let token = self.parse_token();
-                ast::Expr::Infix(Box::new(ast::InfixExpr {
-                    left: expr,
-                    op: ast::InfixOp::Mul(token),
-                    right: self.parse_expr_in(prec),
-                }))
+                let op = ast::InfixOp::Mul(self.parse_token());
+                self.finish_expr_infix(expr, op, prec)
             }
             OpKind::Div => {
-                let token = self.parse_token();
-                ast::Expr::Infix(Box::new(ast::InfixExpr {
-                    left: expr,
-                    op: ast::InfixOp::Div(token),
-                    right: self.parse_expr_in(prec),
-                }))
+                let op = ast::InfixOp::Div(self.parse_token());
+                self.finish_expr_infix(expr, op, prec)
             }
         }
     }

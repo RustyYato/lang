@@ -297,7 +297,7 @@ pub enum Expr {
     FloatLiteral(FloatLiteral),
     Ident(Ident),
     Grouped(Box<Grouped>),
-    Infix(Box<InfixExpr>),
+    Infix(Box<ExprInfix>),
     Missing(MissingExpr),
 }
 
@@ -324,7 +324,7 @@ pub struct Grouped {
 }
 
 #[derive(Debug, MaybeAstNode, AstNode, SerializeTest)]
-pub struct InfixExpr {
+pub struct ExprInfix {
     pub left: Expr,
     #[node(always)]
     pub op: InfixOp,

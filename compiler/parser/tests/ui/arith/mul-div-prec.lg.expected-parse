@@ -24,11 +24,11 @@ TokenList
       12..13
       14..14
 Expr
-   InfixExpr
+   ExprInfix
       Expr
-         InfixExpr
+         ExprInfix
             Expr
-               InfixExpr
+               ExprInfix
                   Expr
                      Ident a ident.1 tok.4
                   InfixOp

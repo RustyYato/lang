@@ -12,7 +12,7 @@ TokenList
       4..5
       6..6
 Expr
-   InfixExpr
+   ExprInfix
       Expr
          Ident a ident.1 tok.4
       InfixOp
