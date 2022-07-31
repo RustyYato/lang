@@ -316,7 +316,7 @@ fn main() -> anyhow::Result<()> {
     println!("\tParse error tests...");
     parse_error_counts.report();
 
-    println!("{:?}", a.elapsed());
+    println!("\n\tRan all tests in {:?}", a.elapsed().bright_yellow());
     println!();
     Ok(())
 }
