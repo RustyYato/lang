@@ -119,7 +119,7 @@ impl<'a, 'text> Parser<'a, 'text> {
         self.lexer.clone().lex()
     }
 
-    pub fn next_token(&mut self) -> (TokenKind, TokenId) {
+    pub fn next_token(&mut self) -> (TokenKind, TokenId, lexer::Token<'text>) {
         let token = self.lexer.lex();
         let ignored = self.consume_ignored_tokens();
         let tok_id = self.token_list.push(
@@ -130,7 +130,7 @@ impl<'a, 'text> Parser<'a, 'text> {
             },
             ignored,
         );
-        (token.kind, tok_id)
+        (token.kind, tok_id, token)
     }
 
     pub fn consume_ignored_tokens(&mut self) -> ast::Ignored {
@@ -160,13 +160,13 @@ impl<'a, 'text> Parser<'a, 'text> {
     }
 
     pub fn parse_ident(&mut self) -> ast::Ident {
-        let (kind, tok_id) = self.next_token();
-        let name = ustr::ustr(self.token_list[tok_id].text);
+        let (kind, tok_id, token) = self.next_token();
+        let name = ustr::ustr(token.text);
         if kind < TokenKind::BasicIdent {
             self.errors.report(Error::UnexpectedToken {
                 found: kind,
                 expected: TokenKind::BasicIdent,
-                span: self.token_list[tok_id].span,
+                span: token.span,
             });
             ast::Ident {
                 name,
@@ -187,8 +187,8 @@ impl<'a, 'text> Parser<'a, 'text> {
         if self.peek() < TokenKind::BasicIdent {
             None
         } else {
-            let (_, tok_id) = self.next_token();
-            let name = ustr::ustr(self.token_list[tok_id].text);
+            let (_, tok_id, token) = self.next_token();
+            let name = ustr::ustr(token.text);
             self.ident_id += 1;
             Some(ast::Ident {
                 name,
@@ -199,14 +199,14 @@ impl<'a, 'text> Parser<'a, 'text> {
     }
 
     pub fn parse_token<const TOKEN_KIND: u8>(&mut self) -> ast::Token<TOKEN_KIND> {
-        let (kind, tok_id) = self.next_token();
+        let (kind, tok_id, token) = self.next_token();
         let valid = kind as u8 == TOKEN_KIND;
         if !valid {
             let expected = ast::Token::<TOKEN_KIND>::TOKEN_KIND;
             self.errors.report(Error::UnexpectedToken {
                 found: kind,
                 expected,
-                span: self.token_list[tok_id].span,
+                span: token.span,
             })
         }
         ast::Token { valid, tok_id }
@@ -214,7 +214,7 @@ impl<'a, 'text> Parser<'a, 'text> {
 
     pub fn try_parse_token<const TOKEN_KIND: u8>(&mut self) -> Option<ast::Token<TOKEN_KIND>> {
         if self.peek() as u8 == TOKEN_KIND {
-            let (_, tok_id) = self.next_token();
+            let (_, tok_id, _) = self.next_token();
             Some(ast::Token {
                 valid: true,
                 tok_id,
@@ -334,10 +334,10 @@ impl<'a, 'text> Parser<'a, 'text> {
             | TokenKind::Loop
             | TokenKind::Break
             | TokenKind::Continue) => {
-                let (_, token) = self.next_token();
+                let (_, _, token) = self.next_token();
                 self.errors.report(Error::ExpectedExpr {
                     found,
-                    span: self.token_list[token].span,
+                    span: token.span,
                 });
                 ast::Expr::Missing(ast::MissingExpr)
             }

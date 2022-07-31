@@ -390,7 +390,13 @@ impl SerializeTest for Spans {
 
 impl SerializeTest for TokenInfo<'_> {
     fn serialize(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        write!(f, "{:?} @ {} = {:?}", self.kind, self.span.display_serialize(), self.text)
+        write!(
+            f,
+            "{:?} @ {} = {:?}",
+            self.kind,
+            self.span.display_serialize(),
+            self.text
+        )
     }
 }
 
