@@ -1,0 +1,4 @@
+# parse_stmt
+{
+    let a = 10;
+}

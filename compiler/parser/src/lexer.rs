@@ -67,6 +67,7 @@ token_kinds! {
     CloseCurly
     Dot
     Eq
+    Semicolon
 
     // no period or exp
     Integer
@@ -172,6 +173,7 @@ impl<'text> Lexer<'text> {
             '{' => TokenKind::OpenCurly,
             '}' => TokenKind::CloseCurly,
             '.' => TokenKind::Dot,
+            ';' => TokenKind::Semicolon,
             '#' => {
                 len = memchr::memchr(b'\n', original.as_bytes()).unwrap_or(original.len());
                 self.text = original[len..].chars();

@@ -242,12 +242,11 @@ impl<'a, 'text> Parser<'a, 'text> {
         expr
     }
 
-    pub fn parse_stmt(&mut self) -> ast::StmtLet {
-        ast::StmtLet {
-            let_tok: self.parse_token(),
-            name: self.parse_ident(),
-            eq_tok: self.parse_token(),
-            expr: self.parse_expr(),
+    pub fn parse_stmt(&mut self) -> ast::Stmt {
+        match self.peek() {
+            TokenKind::Let => ast::Stmt::Let(self.parse_let_stmt()),
+            TokenKind::Semicolon => ast::Stmt::Semicolon(self.parse_token()),
+            _ => ast::Stmt::Expr(self.parse_expr()),
         }
     }
 
@@ -258,6 +257,21 @@ impl<'a, 'text> Parser<'a, 'text> {
             eq_tok: self.parse_token(),
             expr: self.parse_expr(),
         }
+    }
+
+    pub fn parse_block(&mut self) -> ast::Block {
+        let open = self.parse_token();
+        let mut stmts = Vec::new();
+        let close = loop {
+            match self.try_parse_token() {
+                Some(close) => break close,
+                None => (),
+            }
+
+            stmts.push(self.parse_stmt());
+        };
+
+        ast::Block { open, stmts, close }
     }
 
     fn peek_expr_op(&self, _prec: ExprPrec) -> Option<(OpKind, ExprPrec, ExprPrec)> {
@@ -296,6 +310,7 @@ impl<'a, 'text> Parser<'a, 'text> {
                     tok_id: token.tok_id,
                 })
             }
+            TokenKind::OpenCurly => ast::Expr::Block(Box::new(self.parse_block())),
 
             TokenKind::OpenParen => ast::Expr::Grouped(Box::new(ast::Grouped {
                 open_paren: self.parse_token(),
@@ -317,18 +332,20 @@ impl<'a, 'text> Parser<'a, 'text> {
 
             TokenKind::BasicIdent => unreachable!(),
 
-            TokenKind::Unknown | TokenKind::WhiteSpace | TokenKind::LineComment => unreachable!(),
+            TokenKind::WhiteSpace | TokenKind::LineComment => unreachable!(),
 
             found @ (TokenKind::BackSlash
+            | TokenKind::Unknown
             | TokenKind::CloseParen
             | TokenKind::OpenSquare
             | TokenKind::CloseSquare
-            | TokenKind::OpenCurly
             | TokenKind::CloseCurly
+            | TokenKind::Semicolon
             | TokenKind::Dot
             | TokenKind::Eq
             | TokenKind::Let
             | TokenKind::Match
+            | TokenKind::If
             | TokenKind::Else
             | TokenKind::Loop
             | TokenKind::Break

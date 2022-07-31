@@ -270,6 +270,7 @@ macro_rules! Token {
 #[derive(Debug, MaybeAstNode, SerializeTest)]
 pub enum Stmt {
     Let(StmtLet),
+    Semicolon(Token![Semicolon]),
     Expr(Expr),
 }
 
@@ -298,6 +299,7 @@ pub enum Expr {
     Ident(Ident),
     Grouped(Box<Grouped>),
     Infix(Box<ExprInfix>),
+    Block(Box<Block>),
     Missing(MissingExpr),
 }
 
@@ -337,6 +339,30 @@ pub enum InfixOp {
     Sub(Token![Hyphen]),
     Mul(Token![Star]),
     Div(Token![ForSlash]),
+}
+
+#[derive(Debug, MaybeAstNode, AstNode, SerializeTest)]
+pub struct Block {
+    #[node(always)]
+    pub open: Token![OpenCurly],
+    pub stmts: Vec<Stmt>,
+    #[node(always)]
+    pub close: Token![CloseCurly],
+}
+
+#[derive(Debug, MaybeAstNode, AstNode, SerializeTest)]
+pub struct ExprIf {
+    #[node(always)]
+    if_true: If,
+}
+
+#[derive(Debug, MaybeAstNode, AstNode, SerializeTest)]
+pub struct If {
+    #[node(always)]
+    if_tok: Token![If],
+    cond: Expr,
+    #[node(always)]
+    block: Block,
 }
 
 impl SerializeTest for bool {
