@@ -274,6 +274,53 @@ impl<'a, 'text> Parser<'a, 'text> {
         ast::Block { open, stmts, close }
     }
 
+    pub fn parse_parse_expr_if(&mut self) -> ast::ExprIf {
+        let if_true = self.parse_if(None);
+        let mut else_if = Vec::new();
+        let mut if_false = None;
+
+        while let Some(else_tok) = self.try_parse_token() {
+            if let Some(if_tok) = self.try_parse_token() {
+                let if_true = self.parse_if(Some(if_tok));
+                else_if.push(ast::ElseIf { else_tok, if_true })
+            } else {
+                if_false = Some(ast::Else {
+                    else_tok,
+                    block: self.parse_block(),
+                })
+            }
+        }
+
+        ast::ExprIf {
+            if_true,
+            else_if,
+            if_false,
+        }
+    }
+
+    fn parse_if(&mut self, if_tok: Option<Token![If]>) -> ast::If {
+        let if_tok = if_tok.unwrap_or_else(|| self.parse_token());
+        let mut cond = self.parse_expr();
+
+        let block = if self.peek() != TokenKind::OpenCurly {
+            match cond {
+                ast::Expr::Block(block) => {
+                    cond = ast::Expr::Missing(ast::MissingExpr);
+                    *block
+                }
+                _ => self.parse_block(),
+            }
+        } else {
+            self.parse_block()
+        };
+
+        ast::If {
+            if_tok,
+            cond,
+            block,
+        }
+    }
+
     fn peek_expr_op(&self, _prec: ExprPrec) -> Option<(OpKind, ExprPrec, ExprPrec)> {
         Some(match self.peek() {
             TokenKind::Plus => (OpKind::Add, ExprPrec::AddSub, ExprPrec::AddSub),
@@ -317,6 +364,7 @@ impl<'a, 'text> Parser<'a, 'text> {
                 expr: self.parse_expr(),
                 close_paren: self.parse_token(),
             })),
+            TokenKind::If => ast::Expr::If(Box::new(self.parse_parse_expr_if())),
 
             found @ (TokenKind::Eof
             | TokenKind::Plus
@@ -345,7 +393,6 @@ impl<'a, 'text> Parser<'a, 'text> {
             | TokenKind::Eq
             | TokenKind::Let
             | TokenKind::Match
-            | TokenKind::If
             | TokenKind::Else
             | TokenKind::Loop
             | TokenKind::Break

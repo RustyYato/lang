@@ -1,0 +1,12 @@
+# parse_stmt
+if a {
+    let b = 0;
+} else if c {
+    let d = 0;
+} else if e {
+    let f = 0;
+} else if {
+    let g = 0;
+} else {
+    let h = 0;
+}

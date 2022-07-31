@@ -42,6 +42,16 @@ impl<T: SerializeTest> SerializeTest for [T] {
     }
 }
 
+impl<T: SerializeTest> SerializeTest for Option<T> {
+    fn serialize(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        if let Some(this) = self {
+            this.serialize(f)
+        } else {
+            Ok(())
+        }
+    }
+}
+
 impl<T: SerializeTest> SerializeTest for Vec<T> {
     fn serialize(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         self.as_slice().serialize(f)
@@ -99,6 +109,40 @@ impl<A: ?Sized + AstNode> AstNode for Box<A> {
 impl<A: ?Sized + SerializeTest> SerializeTest for Box<A> {
     fn serialize(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         A::serialize(self, f)
+    }
+}
+
+impl<A: MaybeAstNode> MaybeAstNode for Option<A> {
+    fn try_span(&self) -> Option<RangeInclusive<TokenId>> {
+        self.as_ref()?.try_span()
+    }
+
+    fn try_start(&self) -> Option<TokenId> {
+        self.as_ref()?.try_start()
+    }
+
+    fn try_end(&self) -> Option<TokenId> {
+        self.as_ref()?.try_end()
+    }
+}
+
+impl<A: MaybeAstNode> MaybeAstNode for Vec<A> {
+    fn try_span(&self) -> Option<RangeInclusive<TokenId>> {
+        let (first, last) = match self.as_slice() {
+            [first, .., last] => (first, last),
+            [only] => (only, only),
+            [] => return None,
+        };
+
+        Some(first.try_start()?..=last.try_end()?)
+    }
+
+    fn try_start(&self) -> Option<TokenId> {
+        self.first()?.try_start()
+    }
+
+    fn try_end(&self) -> Option<TokenId> {
+        self.last()?.try_end()
     }
 }
 
@@ -300,6 +344,7 @@ pub enum Expr {
     Grouped(Box<Grouped>),
     Infix(Box<ExprInfix>),
     Block(Box<Block>),
+    If(Box<ExprIf>),
     Missing(MissingExpr),
 }
 
@@ -353,16 +398,34 @@ pub struct Block {
 #[derive(Debug, MaybeAstNode, AstNode, SerializeTest)]
 pub struct ExprIf {
     #[node(always)]
-    if_true: If,
+    pub if_true: If,
+    pub else_if: Vec<ElseIf>,
+    pub if_false: Option<Else>,
 }
 
 #[derive(Debug, MaybeAstNode, AstNode, SerializeTest)]
 pub struct If {
     #[node(always)]
-    if_tok: Token![If],
-    cond: Expr,
+    pub if_tok: Token![If],
+    pub cond: Expr,
     #[node(always)]
-    block: Block,
+    pub block: Block,
+}
+
+#[derive(Debug, MaybeAstNode, AstNode, SerializeTest)]
+pub struct ElseIf {
+    #[node(always)]
+    pub else_tok: Token![Else],
+    #[node(always)]
+    pub if_true: If,
+}
+
+#[derive(Debug, MaybeAstNode, AstNode, SerializeTest)]
+pub struct Else {
+    #[node(always)]
+    pub else_tok: Token![Else],
+    #[node(always)]
+    pub block: Block,
 }
 
 impl SerializeTest for bool {
