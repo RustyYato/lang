@@ -277,6 +277,14 @@ fn main() -> anyhow::Result<()> {
             parser.consume_ignored_tokens();
             let output = parser.parse_expr();
             Box::new((parser.finish(), output))
+        } else if file.test.starts_with("# parse_ident") {
+            parser.consume_ignored_tokens();
+            let output = parser.parse_ident();
+            Box::new((parser.finish(), output))
+        } else if file.test.starts_with("# parse_stmt") {
+            parser.consume_ignored_tokens();
+            let output = parser.parse_stmt();
+            Box::new((parser.finish(), output))
         } else {
             println!(
                 "{}: unknown test kind for {} ({})",

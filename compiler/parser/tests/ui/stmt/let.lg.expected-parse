@@ -1,0 +1,23 @@
+TokenList
+   Tokens
+      LineComment @ b0..b12 / 1:1..1:13 = "# parse_stmt"
+      WhiteSpace @ b12..b13 / 1:13..2:1 = "\n"
+      WhiteSpace @ b16..b17 / 2:4..2:5 = " "
+      Let @ b13..b16 / 2:1..2:4 = "let"
+      WhiteSpace @ b18..b19 / 2:6..2:7 = " "
+      BasicIdent @ b17..b18 / 2:5..2:6 = "a"
+      WhiteSpace @ b20..b21 / 2:8..2:9 = " "
+      Eq @ b19..b20 / 2:7..2:8 = "="
+      Integer @ b21..b23 / 2:9..2:11 = "10"
+   Ignored
+      2..3
+      4..5
+      6..7
+      8..8
+Stmt
+   StmtLet
+      Let tok.4 valid=true
+      Ident a ident.1 tok.6
+      Eq tok.8 valid=true
+      Expr
+         Integer tok.9 valid=true
