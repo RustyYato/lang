@@ -1,8 +1,8 @@
 TokenList
    Tokens
-      LineComment @ b0..b13 / 1:1..1:14 = "# parse_ident"
-      WhiteSpace @ b13..b14 / 1:14..2:1 = "\n"
-      Let @ b14..b17 / 2:1..2:4 = "let"
+      1 LineComment @ b0..b13 / 1:1..1:14 = "# parse_ident"
+      2 WhiteSpace @ b13..b14 / 1:14..2:1 = "\n"
+      3 Let @ b14..b17 / 2:1..2:4 = "let"
    Ignored
       2..2
 Ident let "invalid"

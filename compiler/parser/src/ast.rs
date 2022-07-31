@@ -430,7 +430,10 @@ impl SerializeTest for TokenList<'_> {
     fn serialize(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "TokenList(")?;
         write!(f, "Tokens(")?;
+        let mut i = 0;
         for item in &self.items {
+            i += 1;
+            write!(f, "{i} ")?;
             item.serialize(f)?;
             write!(f, ",")?;
         }

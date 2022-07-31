@@ -1,8 +1,8 @@
 TokenList
    Tokens
-      LineComment @ b0..b12 / 1:1..1:13 = "# parse_expr"
-      WhiteSpace @ b12..b13 / 1:13..2:1 = "\n"
-      BasicIdent @ b13..b23 / 2:1..2:11 = "some_ident"
+      1 LineComment @ b0..b12 / 1:1..1:13 = "# parse_expr"
+      2 WhiteSpace @ b12..b13 / 1:13..2:1 = "\n"
+      3 BasicIdent @ b13..b23 / 2:1..2:11 = "some_ident"
    Ignored
       2..2
 Expr
