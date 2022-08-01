@@ -240,6 +240,11 @@ impl<'a, 'text> Parser<'a, 'text> {
         expr
     }
 
+    pub fn parse_file(&mut self) -> ast::File {
+        let (stmts, eof) = self.parse_stmts();
+        ast::File { stmts, eof }
+    }
+
     pub fn parse_stmt(&mut self) -> ast::Stmt {
         match self.peek() {
             TokenKind::Let => ast::Stmt::Let(self.parse_let_stmt()),
@@ -247,6 +252,20 @@ impl<'a, 'text> Parser<'a, 'text> {
             TokenKind::Semicolon => ast::Stmt::Semicolon(self.parse_token()),
             _ => ast::Stmt::Expr(self.parse_expr()),
         }
+    }
+
+    pub fn parse_stmts<const END: u8>(&mut self) -> (Vec<ast::Stmt>, ast::Token<END>) {
+        let mut stmts = Vec::new();
+        let close = loop {
+            match self.try_parse_token() {
+                Some(close) => break close,
+                None if self.lexer.is_eof() => break self.parse_token(),
+                None => (),
+            }
+
+            stmts.push(self.parse_stmt());
+        };
+        (stmts, close)
     }
 
     pub fn parse_let_stmt(&mut self) -> ast::StmtLet {
@@ -260,16 +279,7 @@ impl<'a, 'text> Parser<'a, 'text> {
 
     pub fn parse_block(&mut self) -> ast::Block {
         let open = self.parse_token();
-        let mut stmts = Vec::new();
-        let close = loop {
-            match self.try_parse_token() {
-                Some(close) => break close,
-                None if self.lexer.is_eof() => break self.parse_token(),
-                None => (),
-            }
-
-            stmts.push(self.parse_stmt());
-        };
+        let (stmts, close) = self.parse_stmts();
 
         ast::Block { open, stmts, close }
     }

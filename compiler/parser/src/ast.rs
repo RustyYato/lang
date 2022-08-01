@@ -338,6 +338,13 @@ macro_rules! Token {
 }
 
 #[derive(Debug, MaybeAstNode, SerializeTest)]
+pub struct File {
+    pub stmts: Vec<Stmt>,
+    #[node(always)]
+    pub eof: Token![Eof],
+}
+
+#[derive(Debug, MaybeAstNode, SerializeTest)]
 pub enum Stmt {
     Let(StmtLet),
     While(StmtWhile),
