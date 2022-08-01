@@ -301,6 +301,16 @@ impl<'a, 'text> Parser<'a, 'text> {
 
     fn parse_if(&mut self, if_tok: Option<Token![If]>) -> ast::If {
         let if_tok = if_tok.unwrap_or_else(|| self.parse_token());
+        let cblock = self.parse_cond_block();
+
+        ast::If {
+            if_tok,
+            cond: cblock.cond,
+            block: cblock.block,
+        }
+    }
+
+    fn parse_cond_block(&mut self) -> ast::ConditionalBlock {
         let mut cond = self.parse_expr();
 
         let block = if self.peek() != TokenKind::OpenCurly {
@@ -315,11 +325,7 @@ impl<'a, 'text> Parser<'a, 'text> {
             self.parse_block()
         };
 
-        ast::If {
-            if_tok,
-            cond,
-            block,
-        }
+        ast::ConditionalBlock { cond, block }
     }
 
     fn peek_expr_op(&self, _prec: ExprPrec) -> Option<(OpKind, ExprPrec, ExprPrec)> {

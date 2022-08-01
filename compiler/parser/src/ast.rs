@@ -413,6 +413,13 @@ pub struct If {
 }
 
 #[derive(Debug, MaybeAstNode, AstNode, SerializeTest)]
+pub struct ConditionalBlock {
+    pub cond: Expr,
+    #[node(always)]
+    pub block: Block,
+}
+
+#[derive(Debug, MaybeAstNode, AstNode, SerializeTest)]
 pub struct ElseIf {
     #[node(always)]
     pub else_tok: Token![Else],
