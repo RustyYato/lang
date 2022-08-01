@@ -8,7 +8,7 @@ pub trait Position: Sized {
     fn end(span: &ast::Spans) -> Self;
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct BytePos {
     pub pos: u32,
 }
@@ -27,7 +27,7 @@ impl Position for BytePos {
     }
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct TextPos {
     pub line: u32,
     pub col: u32,

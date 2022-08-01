@@ -2,228 +2,228 @@ TokenList
    Tokens
       1 LineComment @ b0..b12 / 1:1..1:13 = "# parse_stmt"
       2 WhiteSpace @ b12..b13 / 1:13..2:1 = "\n"
-      3 WhiteSpace @ b15..b16 / 2:3..2:4 = " "
-      4 If @ b13..b15 / 2:1..2:3 = "if"
-      5 WhiteSpace @ b17..b18 / 2:5..2:6 = " "
-      6 BasicIdent @ b16..b17 / 2:4..2:5 = "a"
-      7 WhiteSpace @ b19..b20 / 2:7..3:1 = "\n"
-      8 WhiteSpace @ b20..b24 / 3:1..3:5 = "    "
-      9 OpenCurly @ b18..b19 / 2:6..2:7 = "{"
-      10 WhiteSpace @ b27..b28 / 3:8..3:9 = " "
-      11 Let @ b24..b27 / 3:5..3:8 = "let"
-      12 WhiteSpace @ b29..b30 / 3:10..3:11 = " "
-      13 BasicIdent @ b28..b29 / 3:9..3:10 = "b"
-      14 WhiteSpace @ b31..b32 / 3:12..3:13 = " "
-      15 Eq @ b30..b31 / 3:11..3:12 = "="
+      3 If @ b13..b15 / 2:1..2:3 = "if"
+      4 WhiteSpace @ b15..b16 / 2:3..2:4 = " "
+      5 BasicIdent @ b16..b17 / 2:4..2:5 = "a"
+      6 WhiteSpace @ b17..b18 / 2:5..2:6 = " "
+      7 OpenCurly @ b18..b19 / 2:6..2:7 = "{"
+      8 WhiteSpace @ b19..b20 / 2:7..3:1 = "\n"
+      9 WhiteSpace @ b20..b24 / 3:1..3:5 = "    "
+      10 Let @ b24..b27 / 3:5..3:8 = "let"
+      11 WhiteSpace @ b27..b28 / 3:8..3:9 = " "
+      12 BasicIdent @ b28..b29 / 3:9..3:10 = "b"
+      13 WhiteSpace @ b29..b30 / 3:10..3:11 = " "
+      14 Eq @ b30..b31 / 3:11..3:12 = "="
+      15 WhiteSpace @ b31..b32 / 3:12..3:13 = " "
       16 Integer @ b32..b33 / 3:13..3:14 = "0"
-      17 WhiteSpace @ b34..b35 / 3:15..4:1 = "\n"
-      18 Semicolon @ b33..b34 / 3:14..3:15 = ";"
-      19 WhiteSpace @ b36..b37 / 4:2..4:3 = " "
-      20 CloseCurly @ b35..b36 / 4:1..4:2 = "}"
-      21 WhiteSpace @ b41..b42 / 4:7..4:8 = " "
-      22 Else @ b37..b41 / 4:3..4:7 = "else"
-      23 WhiteSpace @ b44..b45 / 4:10..4:11 = " "
-      24 If @ b42..b44 / 4:8..4:10 = "if"
-      25 WhiteSpace @ b46..b47 / 4:12..4:13 = " "
-      26 BasicIdent @ b45..b46 / 4:11..4:12 = "c"
-      27 WhiteSpace @ b48..b49 / 4:14..5:1 = "\n"
-      28 WhiteSpace @ b49..b53 / 5:1..5:5 = "    "
-      29 OpenCurly @ b47..b48 / 4:13..4:14 = "{"
-      30 WhiteSpace @ b56..b57 / 5:8..5:9 = " "
-      31 Let @ b53..b56 / 5:5..5:8 = "let"
-      32 WhiteSpace @ b58..b59 / 5:10..5:11 = " "
-      33 BasicIdent @ b57..b58 / 5:9..5:10 = "d"
-      34 WhiteSpace @ b60..b61 / 5:12..5:13 = " "
-      35 Eq @ b59..b60 / 5:11..5:12 = "="
+      17 Semicolon @ b33..b34 / 3:14..3:15 = ";"
+      18 WhiteSpace @ b34..b35 / 3:15..4:1 = "\n"
+      19 CloseCurly @ b35..b36 / 4:1..4:2 = "}"
+      20 WhiteSpace @ b36..b37 / 4:2..4:3 = " "
+      21 Else @ b37..b41 / 4:3..4:7 = "else"
+      22 WhiteSpace @ b41..b42 / 4:7..4:8 = " "
+      23 If @ b42..b44 / 4:8..4:10 = "if"
+      24 WhiteSpace @ b44..b45 / 4:10..4:11 = " "
+      25 BasicIdent @ b45..b46 / 4:11..4:12 = "c"
+      26 WhiteSpace @ b46..b47 / 4:12..4:13 = " "
+      27 OpenCurly @ b47..b48 / 4:13..4:14 = "{"
+      28 WhiteSpace @ b48..b49 / 4:14..5:1 = "\n"
+      29 WhiteSpace @ b49..b53 / 5:1..5:5 = "    "
+      30 Let @ b53..b56 / 5:5..5:8 = "let"
+      31 WhiteSpace @ b56..b57 / 5:8..5:9 = " "
+      32 BasicIdent @ b57..b58 / 5:9..5:10 = "d"
+      33 WhiteSpace @ b58..b59 / 5:10..5:11 = " "
+      34 Eq @ b59..b60 / 5:11..5:12 = "="
+      35 WhiteSpace @ b60..b61 / 5:12..5:13 = " "
       36 Integer @ b61..b62 / 5:13..5:14 = "0"
-      37 WhiteSpace @ b63..b64 / 5:15..6:1 = "\n"
-      38 Semicolon @ b62..b63 / 5:14..5:15 = ";"
-      39 WhiteSpace @ b65..b66 / 6:2..6:3 = " "
-      40 CloseCurly @ b64..b65 / 6:1..6:2 = "}"
-      41 WhiteSpace @ b70..b71 / 6:7..6:8 = " "
-      42 Else @ b66..b70 / 6:3..6:7 = "else"
-      43 WhiteSpace @ b73..b74 / 6:10..6:11 = " "
-      44 If @ b71..b73 / 6:8..6:10 = "if"
-      45 WhiteSpace @ b75..b76 / 6:12..6:13 = " "
-      46 BasicIdent @ b74..b75 / 6:11..6:12 = "e"
-      47 WhiteSpace @ b77..b78 / 6:14..7:1 = "\n"
-      48 WhiteSpace @ b78..b82 / 7:1..7:5 = "    "
-      49 OpenCurly @ b76..b77 / 6:13..6:14 = "{"
-      50 WhiteSpace @ b85..b86 / 7:8..7:9 = " "
-      51 Let @ b82..b85 / 7:5..7:8 = "let"
-      52 WhiteSpace @ b87..b88 / 7:10..7:11 = " "
-      53 BasicIdent @ b86..b87 / 7:9..7:10 = "f"
-      54 WhiteSpace @ b89..b90 / 7:12..7:13 = " "
-      55 Eq @ b88..b89 / 7:11..7:12 = "="
+      37 Semicolon @ b62..b63 / 5:14..5:15 = ";"
+      38 WhiteSpace @ b63..b64 / 5:15..6:1 = "\n"
+      39 CloseCurly @ b64..b65 / 6:1..6:2 = "}"
+      40 WhiteSpace @ b65..b66 / 6:2..6:3 = " "
+      41 Else @ b66..b70 / 6:3..6:7 = "else"
+      42 WhiteSpace @ b70..b71 / 6:7..6:8 = " "
+      43 If @ b71..b73 / 6:8..6:10 = "if"
+      44 WhiteSpace @ b73..b74 / 6:10..6:11 = " "
+      45 BasicIdent @ b74..b75 / 6:11..6:12 = "e"
+      46 WhiteSpace @ b75..b76 / 6:12..6:13 = " "
+      47 OpenCurly @ b76..b77 / 6:13..6:14 = "{"
+      48 WhiteSpace @ b77..b78 / 6:14..7:1 = "\n"
+      49 WhiteSpace @ b78..b82 / 7:1..7:5 = "    "
+      50 Let @ b82..b85 / 7:5..7:8 = "let"
+      51 WhiteSpace @ b85..b86 / 7:8..7:9 = " "
+      52 BasicIdent @ b86..b87 / 7:9..7:10 = "f"
+      53 WhiteSpace @ b87..b88 / 7:10..7:11 = " "
+      54 Eq @ b88..b89 / 7:11..7:12 = "="
+      55 WhiteSpace @ b89..b90 / 7:12..7:13 = " "
       56 Integer @ b90..b91 / 7:13..7:14 = "0"
-      57 WhiteSpace @ b92..b93 / 7:15..8:1 = "\n"
-      58 Semicolon @ b91..b92 / 7:14..7:15 = ";"
-      59 WhiteSpace @ b94..b95 / 8:2..8:3 = " "
-      60 CloseCurly @ b93..b94 / 8:1..8:2 = "}"
-      61 WhiteSpace @ b99..b100 / 8:7..8:8 = " "
-      62 Else @ b95..b99 / 8:3..8:7 = "else"
-      63 WhiteSpace @ b102..b103 / 8:10..8:11 = " "
-      64 If @ b100..b102 / 8:8..8:10 = "if"
-      65 WhiteSpace @ b104..b105 / 8:12..9:1 = "\n"
-      66 WhiteSpace @ b105..b109 / 9:1..9:5 = "    "
-      67 OpenCurly @ b103..b104 / 8:11..8:12 = "{"
-      68 WhiteSpace @ b112..b113 / 9:8..9:9 = " "
-      69 Let @ b109..b112 / 9:5..9:8 = "let"
-      70 WhiteSpace @ b114..b115 / 9:10..9:11 = " "
-      71 BasicIdent @ b113..b114 / 9:9..9:10 = "g"
-      72 WhiteSpace @ b116..b117 / 9:12..9:13 = " "
-      73 Eq @ b115..b116 / 9:11..9:12 = "="
+      57 Semicolon @ b91..b92 / 7:14..7:15 = ";"
+      58 WhiteSpace @ b92..b93 / 7:15..8:1 = "\n"
+      59 CloseCurly @ b93..b94 / 8:1..8:2 = "}"
+      60 WhiteSpace @ b94..b95 / 8:2..8:3 = " "
+      61 Else @ b95..b99 / 8:3..8:7 = "else"
+      62 WhiteSpace @ b99..b100 / 8:7..8:8 = " "
+      63 If @ b100..b102 / 8:8..8:10 = "if"
+      64 WhiteSpace @ b102..b103 / 8:10..8:11 = " "
+      65 OpenCurly @ b103..b104 / 8:11..8:12 = "{"
+      66 WhiteSpace @ b104..b105 / 8:12..9:1 = "\n"
+      67 WhiteSpace @ b105..b109 / 9:1..9:5 = "    "
+      68 Let @ b109..b112 / 9:5..9:8 = "let"
+      69 WhiteSpace @ b112..b113 / 9:8..9:9 = " "
+      70 BasicIdent @ b113..b114 / 9:9..9:10 = "g"
+      71 WhiteSpace @ b114..b115 / 9:10..9:11 = " "
+      72 Eq @ b115..b116 / 9:11..9:12 = "="
+      73 WhiteSpace @ b116..b117 / 9:12..9:13 = " "
       74 Integer @ b117..b118 / 9:13..9:14 = "0"
-      75 WhiteSpace @ b119..b120 / 9:15..10:1 = "\n"
-      76 Semicolon @ b118..b119 / 9:14..9:15 = ";"
-      77 WhiteSpace @ b121..b122 / 10:2..10:3 = " "
-      78 CloseCurly @ b120..b121 / 10:1..10:2 = "}"
-      79 WhiteSpace @ b126..b127 / 10:7..10:8 = " "
-      80 Else @ b122..b126 / 10:3..10:7 = "else"
-      81 WhiteSpace @ b128..b129 / 10:9..11:1 = "\n"
-      82 WhiteSpace @ b129..b133 / 11:1..11:5 = "    "
-      83 OpenCurly @ b127..b128 / 10:8..10:9 = "{"
-      84 WhiteSpace @ b136..b137 / 11:8..11:9 = " "
-      85 Let @ b133..b136 / 11:5..11:8 = "let"
-      86 WhiteSpace @ b138..b139 / 11:10..11:11 = " "
-      87 BasicIdent @ b137..b138 / 11:9..11:10 = "h"
-      88 WhiteSpace @ b140..b141 / 11:12..11:13 = " "
-      89 Eq @ b139..b140 / 11:11..11:12 = "="
+      75 Semicolon @ b118..b119 / 9:14..9:15 = ";"
+      76 WhiteSpace @ b119..b120 / 9:15..10:1 = "\n"
+      77 CloseCurly @ b120..b121 / 10:1..10:2 = "}"
+      78 WhiteSpace @ b121..b122 / 10:2..10:3 = " "
+      79 Else @ b122..b126 / 10:3..10:7 = "else"
+      80 WhiteSpace @ b126..b127 / 10:7..10:8 = " "
+      81 OpenCurly @ b127..b128 / 10:8..10:9 = "{"
+      82 WhiteSpace @ b128..b129 / 10:9..11:1 = "\n"
+      83 WhiteSpace @ b129..b133 / 11:1..11:5 = "    "
+      84 Let @ b133..b136 / 11:5..11:8 = "let"
+      85 WhiteSpace @ b136..b137 / 11:8..11:9 = " "
+      86 BasicIdent @ b137..b138 / 11:9..11:10 = "h"
+      87 WhiteSpace @ b138..b139 / 11:10..11:11 = " "
+      88 Eq @ b139..b140 / 11:11..11:12 = "="
+      89 WhiteSpace @ b140..b141 / 11:12..11:13 = " "
       90 Integer @ b141..b142 / 11:13..11:14 = "0"
-      91 WhiteSpace @ b143..b144 / 11:15..12:1 = "\n"
-      92 Semicolon @ b142..b143 / 11:14..11:15 = ";"
+      91 Semicolon @ b142..b143 / 11:14..11:15 = ";"
+      92 WhiteSpace @ b143..b144 / 11:15..12:1 = "\n"
       93 CloseCurly @ b144..b145 / 12:1..12:2 = "}"
    Ignored
-      2..3
-      4..5
-      6..8
-      9..10
-      11..12
-      13..14
-      15..15
-      16..17
-      18..19
-      20..21
-      22..23
-      24..25
-      26..28
-      29..30
-      31..32
-      33..34
-      35..35
-      36..37
-      38..39
-      40..41
-      42..43
-      44..45
-      46..48
-      49..50
-      51..52
-      53..54
-      55..55
-      56..57
-      58..59
-      60..61
-      62..63
-      64..66
-      67..68
-      69..70
-      71..72
-      73..73
-      74..75
-      76..77
-      78..79
-      80..82
-      83..84
-      85..86
-      87..88
-      89..89
-      90..91
-      92..92
+      3..4
+      5..6
+      7..9
+      10..11
+      12..13
+      14..15
+      16..16
+      17..18
+      19..20
+      21..22
+      23..24
+      25..26
+      27..29
+      30..31
+      32..33
+      34..35
+      36..36
+      37..38
+      39..40
+      41..42
+      43..44
+      45..46
+      47..49
+      50..51
+      52..53
+      54..55
+      56..56
+      57..58
+      59..60
+      61..62
+      63..64
+      65..67
+      68..69
+      70..71
+      72..73
+      74..74
+      75..76
+      77..78
+      79..80
+      81..83
+      84..85
+      86..87
+      88..89
+      90..90
+      91..92
+      93..93
 Stmt
    Expr
       ExprIf
          If
-            If tok.4 valid=true
+            If tok.3 valid=true
             Expr
-               Ident a ident.1 tok.6
+               Ident a ident.1 tok.5
             Block
-               OpenCurly tok.9 valid=true
+               OpenCurly tok.7 valid=true
                Stmt
                   StmtLet
-                     Let tok.11 valid=true
-                     Ident b ident.2 tok.13
-                     Eq tok.15 valid=true
+                     Let tok.10 valid=true
+                     Ident b ident.2 tok.12
+                     Eq tok.14 valid=true
                      Expr
                         Integer tok.16 valid=true
                Stmt
-                  Semicolon tok.18 valid=true
-               CloseCurly tok.20 valid=true
+                  Semicolon tok.17 valid=true
+               CloseCurly tok.19 valid=true
          ElseIf
-            Else tok.22 valid=true
+            Else tok.21 valid=true
             If
-               If tok.24 valid=true
+               If tok.23 valid=true
                Expr
-                  Ident c ident.3 tok.26
+                  Ident c ident.3 tok.25
                Block
-                  OpenCurly tok.29 valid=true
+                  OpenCurly tok.27 valid=true
                   Stmt
                      StmtLet
-                        Let tok.31 valid=true
-                        Ident d ident.4 tok.33
-                        Eq tok.35 valid=true
+                        Let tok.30 valid=true
+                        Ident d ident.4 tok.32
+                        Eq tok.34 valid=true
                         Expr
                            Integer tok.36 valid=true
                   Stmt
-                     Semicolon tok.38 valid=true
-                  CloseCurly tok.40 valid=true
+                     Semicolon tok.37 valid=true
+                  CloseCurly tok.39 valid=true
          ElseIf
-            Else tok.42 valid=true
+            Else tok.41 valid=true
             If
-               If tok.44 valid=true
+               If tok.43 valid=true
                Expr
-                  Ident e ident.5 tok.46
+                  Ident e ident.5 tok.45
                Block
-                  OpenCurly tok.49 valid=true
+                  OpenCurly tok.47 valid=true
                   Stmt
                      StmtLet
-                        Let tok.51 valid=true
-                        Ident f ident.6 tok.53
-                        Eq tok.55 valid=true
+                        Let tok.50 valid=true
+                        Ident f ident.6 tok.52
+                        Eq tok.54 valid=true
                         Expr
                            Integer tok.56 valid=true
                   Stmt
-                     Semicolon tok.58 valid=true
-                  CloseCurly tok.60 valid=true
+                     Semicolon tok.57 valid=true
+                  CloseCurly tok.59 valid=true
          ElseIf
-            Else tok.62 valid=true
+            Else tok.61 valid=true
             If
-               If tok.64 valid=true
+               If tok.63 valid=true
                Expr
                   MissingExpr
                Block
-                  OpenCurly tok.67 valid=true
+                  OpenCurly tok.65 valid=true
                   Stmt
                      StmtLet
-                        Let tok.69 valid=true
-                        Ident g ident.7 tok.71
-                        Eq tok.73 valid=true
+                        Let tok.68 valid=true
+                        Ident g ident.7 tok.70
+                        Eq tok.72 valid=true
                         Expr
                            Integer tok.74 valid=true
                   Stmt
-                     Semicolon tok.76 valid=true
-                  CloseCurly tok.78 valid=true
+                     Semicolon tok.75 valid=true
+                  CloseCurly tok.77 valid=true
          Else
-            Else tok.80 valid=true
+            Else tok.79 valid=true
             Block
-               OpenCurly tok.83 valid=true
+               OpenCurly tok.81 valid=true
                Stmt
                   StmtLet
-                     Let tok.85 valid=true
-                     Ident h ident.8 tok.87
-                     Eq tok.89 valid=true
+                     Let tok.84 valid=true
+                     Ident h ident.8 tok.86
+                     Eq tok.88 valid=true
                      Expr
                         Integer tok.90 valid=true
                Stmt
-                  Semicolon tok.92 valid=true
+                  Semicolon tok.91 valid=true
                CloseCurly tok.93 valid=true

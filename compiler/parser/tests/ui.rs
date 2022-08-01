@@ -517,8 +517,8 @@ fn print_diff(output: &str, expected: &str) {
                         println!()
                     }
                 } else {
-                    for expected in expected {
-                        println!("\t{}", expected.red())
+                    for (expected, expected_tabs) in expected.iter().zip(expected_tabs) {
+                        println!("\t{expected_tabs}{}", expected.red())
                     }
                     for (output, output_tabs) in output.iter().zip(output_tabs) {
                         println!("\t{output_tabs}{}", output.green())

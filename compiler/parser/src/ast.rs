@@ -228,17 +228,43 @@ impl<'text> TokenList<'text> {
 
     pub fn push_ignored(&mut self, token: TokenInfo<'text>) {
         if self.ignored.is_some() {
-            self.items.push(token);
-            self.new_token_id();
+            self.push(token);
         }
     }
 
-    pub fn push(&mut self, token: TokenInfo<'text>, ignored: Ignored) -> TokenId {
+    fn validate_spans(&self, token: &TokenInfo<'_>) {
+        if token.kind == TokenKind::Eof {
+            assert_eq!(token.span.byte.start, token.span.byte.end);
+            assert_eq!(token.span.text.start, token.span.text.end);
+        } else {
+            assert!(token.span.byte.start < token.span.byte.end);
+            assert!(token.span.text.start < token.span.text.end);
+        }
+        if token.span.text.start.line == token.span.text.end.line {
+            let col_diff = token.span.text.end.col - token.span.text.start.col;
+            let byte_diff = token.span.byte.end.pos - token.span.byte.start.pos;
+            assert_eq!(col_diff, byte_diff);
+        }
+        if let Some(last) = self.items.last() {
+            assert_eq!(last.span.byte.end, token.span.byte.start);
+            assert_eq!(last.span.text.end, token.span.text.start);
+        }
+    }
+
+    pub fn push(&mut self, token: TokenInfo<'text>) -> TokenId {
+        self.validate_spans(&token);
         self.items.push(token);
+        self.new_token_id()
+    }
+
+    pub fn commit_ignored(&mut self, ignored: Ignored) {
         if let Some(ignored_items) = self.ignored.as_mut() {
+            assert_eq!(self.items.len(), ignored.items.end);
+            if let Some(last) = ignored_items.last() {
+                assert!(last.items.end < ignored.items.start);
+            }
             ignored_items.push(ignored);
         }
-        self.new_token_id()
     }
 }
 
@@ -357,6 +383,22 @@ pub enum Expr {
     If(Box<ExprIf>),
     Loop(Box<ExprLoop>),
     Missing(MissingExpr),
+    Break(ExprBreak),
+    Continue(ExprContinue),
+}
+
+#[derive(Debug, MaybeAstNode, AstNode, SerializeTest)]
+pub struct ExprBreak {
+    #[node(always)]
+    pub break_tok: Token![Break],
+    pub expr: Option<Box<Expr>>,
+}
+
+#[derive(Debug, MaybeAstNode, AstNode, SerializeTest)]
+pub struct ExprContinue {
+    #[node(always)]
+    pub continue_tok: Token![Continue],
+    pub expr: Option<Box<Expr>>,
 }
 
 #[derive(Debug, SerializeTest)]

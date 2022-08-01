@@ -2,20 +2,20 @@ TokenList
    Tokens
       1 LineComment @ b0..b12 / 1:1..1:13 = "# parse_expr"
       2 WhiteSpace @ b12..b13 / 1:13..2:1 = "\n"
-      3 WhiteSpace @ b14..b15 / 2:2..2:3 = " "
-      4 BasicIdent @ b13..b14 / 2:1..2:2 = "a"
-      5 WhiteSpace @ b16..b17 / 2:4..2:5 = " "
-      6 ForSlash @ b15..b16 / 2:3..2:4 = "/"
+      3 BasicIdent @ b13..b14 / 2:1..2:2 = "a"
+      4 WhiteSpace @ b14..b15 / 2:2..2:3 = " "
+      5 ForSlash @ b15..b16 / 2:3..2:4 = "/"
+      6 WhiteSpace @ b16..b17 / 2:4..2:5 = " "
       7 BasicIdent @ b17..b18 / 2:5..2:6 = "b"
    Ignored
-      2..3
-      4..5
-      6..6
+      3..4
+      5..6
+      7..7
 Expr
    ExprInfix
       Expr
-         Ident a ident.1 tok.4
+         Ident a ident.1 tok.3
       InfixOp
-         ForSlash tok.6 valid=true
+         ForSlash tok.5 valid=true
       Expr
          Ident b ident.2 tok.7

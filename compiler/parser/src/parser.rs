@@ -121,15 +121,13 @@ impl<'a, 'text> Parser<'a, 'text> {
 
     pub fn next_token(&mut self) -> (TokenKind, TokenId, lexer::Token<'text>) {
         let token = self.lexer.lex();
+        let tok_id = self.token_list.push(ast::TokenInfo {
+            kind: token.kind,
+            text: token.text,
+            span: token.span,
+        });
         let ignored = self.consume_ignored_tokens();
-        let tok_id = self.token_list.push(
-            ast::TokenInfo {
-                kind: token.kind,
-                text: token.text,
-                span: token.span,
-            },
-            ignored,
-        );
+        self.token_list.commit_ignored(ignored);
         (token.kind, tok_id, token)
     }
 
@@ -229,7 +227,7 @@ impl<'a, 'text> Parser<'a, 'text> {
     }
 
     fn parse_expr_in(&mut self, prec: ExprPrec) -> ast::Expr {
-        let mut expr = self.parse_basic_expr();
+        let mut expr = self.parse_basic_expr(prec);
 
         while let Some((op_kind, before, after)) = self.peek_expr_op(prec) {
             if before <= prec {
@@ -350,7 +348,7 @@ impl<'a, 'text> Parser<'a, 'text> {
         })
     }
 
-    pub fn parse_basic_expr(&mut self) -> ast::Expr {
+    fn parse_basic_expr(&mut self, prec: ExprPrec) -> ast::Expr {
         match self.peek() {
             token if token >= TokenKind::BasicIdent => ast::Expr::Ident(self.parse_ident()),
 
@@ -400,6 +398,36 @@ impl<'a, 'text> Parser<'a, 'text> {
                 });
                 ast::Expr::Missing(ast::MissingExpr)
             }
+            TokenKind::Break => {
+                let break_tok = self.parse_token();
+                let expr = if !matches!(
+                    self.peek(),
+                    TokenKind::CloseCurly
+                        | TokenKind::Eof
+                        | TokenKind::CloseParen
+                        | TokenKind::CloseSquare
+                ) {
+                    Some(Box::new(self.parse_expr_in(prec)))
+                } else {
+                    None
+                };
+                ast::Expr::Break(ast::ExprBreak { break_tok, expr })
+            }
+            TokenKind::Continue => {
+                let continue_tok = self.parse_token();
+                let expr = if !matches!(
+                    self.peek(),
+                    TokenKind::CloseCurly
+                        | TokenKind::Eof
+                        | TokenKind::CloseParen
+                        | TokenKind::CloseSquare
+                ) {
+                    Some(Box::new(self.parse_expr_in(prec)))
+                } else {
+                    None
+                };
+                ast::Expr::Continue(ast::ExprContinue { continue_tok, expr })
+            }
 
             TokenKind::BasicIdent => unreachable!(),
 
@@ -417,10 +445,7 @@ impl<'a, 'text> Parser<'a, 'text> {
             | TokenKind::Eq
             | TokenKind::Let
             | TokenKind::Match
-            | TokenKind::Else
-            | TokenKind::Loop
-            | TokenKind::Break
-            | TokenKind::Continue) => {
+            | TokenKind::Else) => {
                 let (_, _, token) = self.next_token();
                 self.errors.report(Error::ExpectedExpr {
                     found,

@@ -4,6 +4,6 @@ TokenList
       2 WhiteSpace @ b12..b13 / 1:13..2:1 = "\n"
       3 Integer @ b13..b16 / 2:1..2:4 = "100"
    Ignored
-      2..2
+      3..3
 Expr
    Integer tok.3 valid=true

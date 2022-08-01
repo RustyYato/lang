@@ -2,27 +2,27 @@ TokenList
    Tokens
       1 LineComment @ b0..b12 / 1:1..1:13 = "# parse_expr"
       2 WhiteSpace @ b12..b13 / 1:13..2:1 = "\n"
-      3 WhiteSpace @ b14..b15 / 2:2..2:3 = " "
-      4 BasicIdent @ b13..b14 / 2:1..2:2 = "a"
-      5 WhiteSpace @ b16..b17 / 2:4..2:5 = " "
-      6 Plus @ b15..b16 / 2:3..2:4 = "+"
-      7 WhiteSpace @ b18..b19 / 2:6..2:7 = " "
-      8 BasicIdent @ b17..b18 / 2:5..2:6 = "b"
-      9 WhiteSpace @ b20..b21 / 2:8..2:9 = " "
-      10 Hyphen @ b19..b20 / 2:7..2:8 = "-"
-      11 WhiteSpace @ b22..b23 / 2:10..2:11 = " "
-      12 BasicIdent @ b21..b22 / 2:9..2:10 = "c"
-      13 WhiteSpace @ b24..b25 / 2:12..2:13 = " "
-      14 Plus @ b23..b24 / 2:11..2:12 = "+"
+      3 BasicIdent @ b13..b14 / 2:1..2:2 = "a"
+      4 WhiteSpace @ b14..b15 / 2:2..2:3 = " "
+      5 Plus @ b15..b16 / 2:3..2:4 = "+"
+      6 WhiteSpace @ b16..b17 / 2:4..2:5 = " "
+      7 BasicIdent @ b17..b18 / 2:5..2:6 = "b"
+      8 WhiteSpace @ b18..b19 / 2:6..2:7 = " "
+      9 Hyphen @ b19..b20 / 2:7..2:8 = "-"
+      10 WhiteSpace @ b20..b21 / 2:8..2:9 = " "
+      11 BasicIdent @ b21..b22 / 2:9..2:10 = "c"
+      12 WhiteSpace @ b22..b23 / 2:10..2:11 = " "
+      13 Plus @ b23..b24 / 2:11..2:12 = "+"
+      14 WhiteSpace @ b24..b25 / 2:12..2:13 = " "
       15 BasicIdent @ b25..b26 / 2:13..2:14 = "d"
    Ignored
-      2..3
-      4..5
-      6..7
-      8..9
-      10..11
-      12..13
-      14..14
+      3..4
+      5..6
+      7..8
+      9..10
+      11..12
+      13..14
+      15..15
 Expr
    ExprInfix
       Expr
@@ -30,16 +30,16 @@ Expr
             Expr
                ExprInfix
                   Expr
-                     Ident a ident.1 tok.4
+                     Ident a ident.1 tok.3
                   InfixOp
-                     Plus tok.6 valid=true
+                     Plus tok.5 valid=true
                   Expr
-                     Ident b ident.2 tok.8
+                     Ident b ident.2 tok.7
             InfixOp
-               Hyphen tok.10 valid=true
+               Hyphen tok.9 valid=true
             Expr
-               Ident c ident.3 tok.12
+               Ident c ident.3 tok.11
       InfixOp
-         Plus tok.14 valid=true
+         Plus tok.13 valid=true
       Expr
          Ident d ident.4 tok.15

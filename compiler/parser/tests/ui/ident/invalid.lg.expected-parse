@@ -4,5 +4,5 @@ TokenList
       2 WhiteSpace @ b13..b14 / 1:14..2:1 = "\n"
       3 Let @ b14..b17 / 2:1..2:4 = "let"
    Ignored
-      2..2
+      3..3
 Ident let "invalid"

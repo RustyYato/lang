@@ -4,6 +4,6 @@ TokenList
       2 WhiteSpace @ b12..b13 / 1:13..2:1 = "\n"
       3 Dot @ b13..b14 / 2:1..2:2 = "."
    Ignored
-      2..2
+      3..3
 Expr
    MissingExpr
