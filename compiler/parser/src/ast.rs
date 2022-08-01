@@ -355,6 +355,7 @@ pub enum Expr {
     Infix(Box<ExprInfix>),
     Block(Box<Block>),
     If(Box<ExprIf>),
+    Loop(Box<ExprLoop>),
     Missing(MissingExpr),
 }
 
@@ -403,6 +404,14 @@ pub struct Block {
     pub stmts: Vec<Stmt>,
     #[node(always)]
     pub close: Token![CloseCurly],
+}
+
+#[derive(Debug, MaybeAstNode, AstNode, SerializeTest)]
+pub struct ExprLoop {
+    #[node(always)]
+    pub loop_tok: Token![Loop],
+    #[node(always)]
+    pub block: Block,
 }
 
 #[derive(Debug, MaybeAstNode, AstNode, SerializeTest)]

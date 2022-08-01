@@ -1,0 +1,44 @@
+TokenList
+   Tokens
+      1 LineComment @ b0..b12 / 1:1..1:13 = "# parse_stmt"
+      2 WhiteSpace @ b12..b13 / 1:13..2:1 = "\n"
+      3 WhiteSpace @ b17..b18 / 2:5..2:6 = " "
+      4 Loop @ b13..b17 / 2:1..2:5 = "loop"
+      5 WhiteSpace @ b19..b20 / 2:7..3:1 = "\n"
+      6 WhiteSpace @ b20..b24 / 3:1..3:5 = "    "
+      7 OpenCurly @ b18..b19 / 2:6..2:7 = "{"
+      8 WhiteSpace @ b27..b28 / 3:8..3:9 = " "
+      9 Let @ b24..b27 / 3:5..3:8 = "let"
+      10 WhiteSpace @ b29..b30 / 3:10..3:11 = " "
+      11 BasicIdent @ b28..b29 / 3:9..3:10 = "a"
+      12 WhiteSpace @ b31..b32 / 3:12..3:13 = " "
+      13 Eq @ b30..b31 / 3:11..3:12 = "="
+      14 Integer @ b32..b33 / 3:13..3:14 = "0"
+      15 WhiteSpace @ b34..b35 / 3:15..4:1 = "\n"
+      16 Semicolon @ b33..b34 / 3:14..3:15 = ";"
+      17 CloseCurly @ b35..b36 / 4:1..4:2 = "}"
+   Ignored
+      2..3
+      4..6
+      7..8
+      9..10
+      11..12
+      13..13
+      14..15
+      16..16
+Stmt
+   Expr
+      ExprLoop
+         Loop tok.4 valid=true
+         Block
+            OpenCurly tok.7 valid=true
+            Stmt
+               StmtLet
+                  Let tok.9 valid=true
+                  Ident a ident.1 tok.11
+                  Eq tok.13 valid=true
+                  Expr
+                     Integer tok.14 valid=true
+            Stmt
+               Semicolon tok.16 valid=true
+            CloseCurly tok.17 valid=true

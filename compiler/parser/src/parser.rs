@@ -384,6 +384,10 @@ impl<'a, 'text> Parser<'a, 'text> {
                 close_paren: self.parse_token(),
             })),
             TokenKind::If => ast::Expr::If(Box::new(self.parse_parse_expr_if())),
+            TokenKind::Loop => ast::Expr::Loop(Box::new(ast::ExprLoop {
+                loop_tok: self.parse_token(),
+                block: self.parse_block(),
+            })),
 
             found @ (TokenKind::Eof
             | TokenKind::Plus

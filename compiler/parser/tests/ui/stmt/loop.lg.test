@@ -1,0 +1,4 @@
+# parse_stmt
+loop {
+    let a = 0;
+}
