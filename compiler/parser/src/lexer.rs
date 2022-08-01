@@ -81,6 +81,7 @@ token_kinds! {
     // keywords
     Let
     Match
+    While
     If
     Else
     Loop
@@ -253,6 +254,7 @@ impl<'text> Lexer<'text> {
                 "else" => TokenKind::Else,
                 "loop" => TokenKind::Loop,
                 "break" => TokenKind::Break,
+                "while" => TokenKind::While,
                 "continue" => TokenKind::Continue,
                 "match" => TokenKind::Match,
                 _ => TokenKind::BasicIdent,

@@ -1,0 +1,9 @@
+# parse_stmt
+{
+    while {
+        let a = 0;
+    }
+    while b {
+        let c = 0;
+    }
+}

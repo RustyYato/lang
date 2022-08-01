@@ -245,6 +245,7 @@ impl<'a, 'text> Parser<'a, 'text> {
     pub fn parse_stmt(&mut self) -> ast::Stmt {
         match self.peek() {
             TokenKind::Let => ast::Stmt::Let(self.parse_let_stmt()),
+            TokenKind::While => ast::Stmt::While(self.parse_while_stmt()),
             TokenKind::Semicolon => ast::Stmt::Semicolon(self.parse_token()),
             _ => ast::Stmt::Expr(self.parse_expr()),
         }
@@ -305,6 +306,17 @@ impl<'a, 'text> Parser<'a, 'text> {
 
         ast::If {
             if_tok,
+            cond: cblock.cond,
+            block: cblock.block,
+        }
+    }
+
+    fn parse_while_stmt(&mut self) -> ast::StmtWhile {
+        let while_tok = self.parse_token();
+        let cblock = self.parse_cond_block();
+
+        ast::StmtWhile {
+            while_tok,
             cond: cblock.cond,
             block: cblock.block,
         }
@@ -395,6 +407,7 @@ impl<'a, 'text> Parser<'a, 'text> {
             | TokenKind::OpenSquare
             | TokenKind::CloseSquare
             | TokenKind::CloseCurly
+            | TokenKind::While
             | TokenKind::Semicolon
             | TokenKind::Dot
             | TokenKind::Eq

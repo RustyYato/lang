@@ -314,6 +314,7 @@ macro_rules! Token {
 #[derive(Debug, MaybeAstNode, SerializeTest)]
 pub enum Stmt {
     Let(StmtLet),
+    While(StmtWhile),
     Semicolon(Token![Semicolon]),
     Expr(Expr),
 }
@@ -326,6 +327,15 @@ pub struct StmtLet {
     #[node(always)]
     pub eq_tok: Token![Eq],
     pub expr: Expr,
+}
+
+#[derive(Debug, MaybeAstNode, AstNode, SerializeTest)]
+pub struct StmtWhile {
+    #[node(always)]
+    pub while_tok: Token![While],
+    pub cond: Expr,
+    #[node(always)]
+    pub block: Block,
 }
 
 #[derive(Debug, MaybeAstNode, AstNode)]
