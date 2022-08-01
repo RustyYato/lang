@@ -20,10 +20,10 @@ fn main() -> anyhow::Result<()> {
     let mut parser = parser::parser::Parser::new(&mut errors, &file);
 
     parser.consume_ignored_tokens();
-    let expr = parser.parse_expr();
-    println!("{:#?}", expr);
-    let expr = expr.to_serialize_string();
-    println!("{}", expr);
+    let file = parser.parse_file();
+    println!("{:#?}", file);
+    let file = file.to_serialize_string();
+    println!("{}", file);
     println!();
 
     Ok(())
