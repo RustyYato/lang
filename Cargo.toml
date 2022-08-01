@@ -3,3 +3,6 @@
 members = [
     'compiler/*'
 ]
+
+[profile.bench]
+debug = true
