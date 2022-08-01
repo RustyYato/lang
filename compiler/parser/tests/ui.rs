@@ -266,7 +266,7 @@ fn main() -> anyhow::Result<()> {
     let mut parse_error_counts = Counts::default();
 
     for (i, file) in tests.iter().enumerate() {
-        if i % 50 == 0 {
+        if i % 25 == 0 {
             println!();
             print!("\t");
         }
