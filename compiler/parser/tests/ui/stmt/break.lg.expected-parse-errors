@@ -1,0 +1,8 @@
+Error
+   ExpectedExpr
+      Semicolon
+      b29..b30 / 3:10..3:11
+Error
+   ExpectedExpr
+      Semicolon
+      b43..b44 / 4:13..4:14

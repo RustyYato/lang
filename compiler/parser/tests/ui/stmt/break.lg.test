@@ -1,0 +1,8 @@
+# parse_stmt
+loop {
+    break;
+    continue;
+    break 10;
+    continue 10;
+    break continue break continue 10
+}
