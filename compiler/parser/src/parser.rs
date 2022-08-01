@@ -265,6 +265,7 @@ impl<'a, 'text> Parser<'a, 'text> {
         let close = loop {
             match self.try_parse_token() {
                 Some(close) => break close,
+                None if self.lexer.is_eof() => break self.parse_token(),
                 None => (),
             }
 

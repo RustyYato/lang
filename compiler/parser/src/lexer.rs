@@ -265,4 +265,8 @@ impl<'text> Lexer<'text> {
             kind,
         }
     }
+
+    pub(crate) fn is_eof(&self) -> bool {
+        self.text.as_str() == ""
+    }
 }
