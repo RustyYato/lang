@@ -1,0 +1,9 @@
+TokenList
+   Tokens
+      1 LineComment @ b0..b12 / 1:1..1:13 = "# parse_expr"
+      2 WhiteSpace @ b12..b13 / 1:13..2:1 = "\n"
+      3 True @ b13..b17 / 2:1..2:5 = "true"
+   Ignored
+      3..3
+Expr
+   True tok.3 valid=true

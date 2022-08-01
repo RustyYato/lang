@@ -87,6 +87,8 @@ token_kinds! {
     Loop
     Break
     Continue
+    True
+    False
 
     // ident + contextual keywords
     BasicIdent
@@ -243,13 +245,15 @@ impl<'text> Lexer<'text> {
             _ => TokenKind::Unknown,
         };
 
-        let text = unsafe { original.get_unchecked(..len) };
+        let text = &original[..len];
         self.pos += len as u32;
         self.col += col_offset.unwrap_or(len) as u32;
 
         if kind == TokenKind::BasicIdent {
             kind = match text {
                 "let" => TokenKind::Let,
+                "true" => TokenKind::True,
+                "false" => TokenKind::False,
                 "if" => TokenKind::If,
                 "else" => TokenKind::Else,
                 "loop" => TokenKind::Loop,

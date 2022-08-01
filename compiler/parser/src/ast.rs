@@ -383,6 +383,8 @@ pub struct FloatLiteral {
 pub enum Expr {
     IntegerLiteral(Token![Integer]),
     FloatLiteral(FloatLiteral),
+    True(Token![True]),
+    False(Token![False]),
     Ident(Ident),
     Grouped(Box<Grouped>),
     Infix(Box<ExprInfix>),

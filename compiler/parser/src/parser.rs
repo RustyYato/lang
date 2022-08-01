@@ -438,6 +438,8 @@ impl<'a, 'text> Parser<'a, 'text> {
                 };
                 ast::Expr::Continue(ast::ExprContinue { continue_tok, expr })
             }
+            TokenKind::True => ast::Expr::True(self.parse_token()),
+            TokenKind::False => ast::Expr::False(self.parse_token()),
 
             TokenKind::BasicIdent => unreachable!(),
 
