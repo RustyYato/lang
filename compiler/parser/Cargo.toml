@@ -27,3 +27,6 @@ features = ['env']
 name = "ui"
 path = "tests/ui.rs"
 harness = false
+
+[profile.bench]
+debug = true

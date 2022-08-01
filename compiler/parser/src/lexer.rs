@@ -12,7 +12,7 @@ pub struct Pos {
     pub text: TextPos,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub struct Token<'text> {
     pub kind: TokenKind,
     pub text: &'text str,
