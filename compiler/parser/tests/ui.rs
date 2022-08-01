@@ -270,29 +270,10 @@ fn main() -> anyhow::Result<()> {
             println!();
             print!("\t");
         }
-        let mut errors = Vec::new();
-        let mut parser = parser::parser::Parser::new(&mut errors, &file.test);
 
-        let output: Box<dyn SerializeTest> = if file.test.starts_with("# parse_expr") {
-            parser.consume_ignored_tokens();
-            let output = parser.parse_expr();
-            Box::new((parser.finish(), output))
-        } else if file.test.starts_with("# parse_ident") {
-            parser.consume_ignored_tokens();
-            let output = parser.parse_ident();
-            Box::new((parser.finish(), output))
-        } else if file.test.starts_with("# parse_stmt") {
-            parser.consume_ignored_tokens();
-            let output = parser.parse_stmt();
-            Box::new((parser.finish(), output))
-        } else {
-            println!(
-                "{}: unknown test kind for {} ({})",
-                "WARNING".yellow(),
-                file.name.yellow(),
-                file.rel_path.display().dimmed()
-            );
-            continue;
+        let (output, errors) = match run_test(file) {
+            Some(output) => output,
+            None => continue,
         };
 
         print_outputs.extend(handle_test_case(
@@ -327,6 +308,33 @@ fn main() -> anyhow::Result<()> {
     println!("\n\tRan all tests in {:?}", a.elapsed().bright_yellow());
     println!();
     Ok(())
+}
+
+fn run_test(file: &Test) -> Option<(Box<dyn SerializeTest + '_>, Vec<parser::parser::Error>)> {
+    let mut errors = Vec::new();
+    let mut parser = parser::parser::Parser::new(&mut errors, &file.test);
+
+    Some(if file.test.starts_with("# parse_expr") {
+        parser.consume_ignored_tokens();
+        let output = parser.parse_expr();
+        (Box::new((parser.finish(), output)), errors)
+    } else if file.test.starts_with("# parse_ident") {
+        parser.consume_ignored_tokens();
+        let output = parser.parse_ident();
+        (Box::new((parser.finish(), output)), errors)
+    } else if file.test.starts_with("# parse_stmt") {
+        parser.consume_ignored_tokens();
+        let output = parser.parse_stmt();
+        (Box::new((parser.finish(), output)), errors)
+    } else {
+        println!(
+            "{}: unknown test kind for {} ({})",
+            "WARNING".yellow(),
+            file.name.yellow(),
+            file.rel_path.display().dimmed()
+        );
+        return None;
+    })
 }
 
 fn handle_test_case(
