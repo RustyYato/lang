@@ -72,6 +72,8 @@ enum ExprPrec {
 
     AddSub,
     MulDiv,
+
+    Postfix,
 }
 
 enum OpKind {
@@ -79,6 +81,9 @@ enum OpKind {
     Sub,
     Mul,
     Div,
+
+    Deref,
+    Ref,
 }
 
 impl<'a, 'text> Parser<'a, 'text> {
@@ -354,6 +359,8 @@ impl<'a, 'text> Parser<'a, 'text> {
             TokenKind::Hyphen => (OpKind::Sub, ExprPrec::AddSub, ExprPrec::AddSub),
             TokenKind::Star => (OpKind::Mul, ExprPrec::MulDiv, ExprPrec::MulDiv),
             TokenKind::ForSlash => (OpKind::Div, ExprPrec::MulDiv, ExprPrec::MulDiv),
+            TokenKind::DotStar => (OpKind::Deref, ExprPrec::Postfix, ExprPrec::Postfix),
+            TokenKind::DotAt => (OpKind::Ref, ExprPrec::Postfix, ExprPrec::Postfix),
             _ => return None,
         })
     }
@@ -454,6 +461,8 @@ impl<'a, 'text> Parser<'a, 'text> {
             | TokenKind::While
             | TokenKind::Semicolon
             | TokenKind::Dot
+            | TokenKind::DotStar
+            | TokenKind::DotAt
             | TokenKind::Eq
             | TokenKind::Let
             | TokenKind::Match
@@ -481,6 +490,10 @@ impl<'a, 'text> Parser<'a, 'text> {
         }))
     }
 
+    fn finish_expr_postfix(&mut self, left: ast::Expr, op: ast::PostfixOp) -> ast::Expr {
+        ast::Expr::Postfix(Box::new(ast::ExprPostfix { left, op }))
+    }
+
     fn finish_expr(&mut self, expr: ast::Expr, op_kind: OpKind, prec: ExprPrec) -> ast::Expr {
         match op_kind {
             OpKind::Add => {
@@ -498,6 +511,14 @@ impl<'a, 'text> Parser<'a, 'text> {
             OpKind::Div => {
                 let op = ast::InfixOp::Div(self.parse_token());
                 self.finish_expr_infix(expr, op, prec)
+            }
+            OpKind::Deref => {
+                let op = ast::PostfixOp::Deref(self.parse_token());
+                self.finish_expr_postfix(expr, op)
+            }
+            OpKind::Ref => {
+                let op = ast::PostfixOp::Ref(self.parse_token());
+                self.finish_expr_postfix(expr, op)
             }
         }
     }

@@ -66,6 +66,8 @@ token_kinds! {
     OpenCurly
     CloseCurly
     Dot
+    DotStar
+    DotAt
     Eq
     Semicolon
 
@@ -175,7 +177,17 @@ impl<'text> Lexer<'text> {
             ']' => TokenKind::CloseSquare,
             '{' => TokenKind::OpenCurly,
             '}' => TokenKind::CloseCurly,
-            '.' => TokenKind::Dot,
+            '.' => {
+                let text = self.text.clone();
+                match self.text.next() {
+                    Some('*') => TokenKind::DotStar,
+                    Some('@') => TokenKind::DotAt,
+                    _ => {
+                        self.text = text;
+                        TokenKind::Dot
+                    }
+                }
+            }
             ';' => TokenKind::Semicolon,
             '#' => {
                 len = memchr::memchr(b'\n', original.as_bytes()).unwrap_or(original.len());

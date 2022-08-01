@@ -1,0 +1,15 @@
+TokenList
+   Tokens
+      1 LineComment @ b0..b12 / 1:1..1:13 = "# parse_expr"
+      2 WhiteSpace @ b12..b13 / 1:13..2:1 = "\n"
+      3 BasicIdent @ b13..b14 / 2:1..2:2 = "a"
+      4 DotStar @ b14..b15 / 2:2..2:3 = "."
+   Ignored
+      3..3
+      4..4
+Expr
+   ExprPostfix
+      Expr
+         Ident a ident.1 tok.3
+      PostfixOp
+         DotStar tok.4 valid=true

@@ -388,6 +388,7 @@ pub enum Expr {
     Ident(Ident),
     Grouped(Box<Grouped>),
     Infix(Box<ExprInfix>),
+    Postfix(Box<ExprPostfix>),
     Block(Box<Block>),
     If(Box<ExprIf>),
     Loop(Box<ExprLoop>),
@@ -446,6 +447,19 @@ pub enum InfixOp {
     Sub(Token![Hyphen]),
     Mul(Token![Star]),
     Div(Token![ForSlash]),
+}
+
+#[derive(Debug, MaybeAstNode, AstNode, SerializeTest)]
+pub struct ExprPostfix {
+    pub left: Expr,
+    #[node(always)]
+    pub op: PostfixOp,
+}
+
+#[derive(Debug, MaybeAstNode, AstNode, SerializeTest)]
+pub enum PostfixOp {
+    Deref(Token![DotStar]),
+    Ref(Token![DotAt]),
 }
 
 #[derive(Debug, MaybeAstNode, AstNode, SerializeTest)]
