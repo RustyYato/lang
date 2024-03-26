@@ -6,3 +6,4 @@ edition = "2021"
 [dependencies]
 init.workspace = true
 bumpme.workspace = true
+rustc-hash.workspace = true

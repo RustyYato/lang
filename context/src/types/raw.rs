@@ -13,9 +13,11 @@ impl TypeHeader {
     }
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, Hash)]
+#[repr(u8)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum TypeKind {
     Unit,
+    Int,
 }
 
 pub unsafe trait BasicTypeData<'ctx>:
@@ -39,7 +41,7 @@ unsafe impl<'ctx, T: BasicTypeData<'ctx>> TypeData<'ctx> for T {
     }
 }
 
-pub unsafe trait TypeData<'ctx>: 'ctx + Send + Sync {
+pub unsafe trait TypeData<'ctx>: 'ctx {
     type Target: ?Sized;
 
     fn try_cast(ptr: Type<'ctx>) -> Option<Type<'ctx, Self::Target>>;
@@ -99,6 +101,20 @@ impl TypeHeader {
 impl<'ctx> Type<'ctx> {
     pub fn try_cast<T: ?Sized + TypeData<'ctx>>(self) -> Option<Type<'ctx, T::Target>> {
         T::try_cast(self)
+    }
+
+    pub fn cast<T: ?Sized + TypeData<'ctx>>(self) -> Type<'ctx, T::Target> {
+        fn bad_cast<Target: ?Sized>(kind: TypeKind) -> ! {
+            panic!(
+                "Could not cast {kind:?} to {}",
+                core::any::type_name::<Target>()
+            )
+        }
+
+        match T::try_cast(self) {
+            Some(ptr) => ptr,
+            None => bad_cast::<T::Target>(self.kind()),
+        }
     }
 
     pub const fn kind(self) -> TypeKind {

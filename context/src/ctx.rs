@@ -1,6 +1,6 @@
-use std::marker::PhantomData;
+use std::{marker::PhantomData, num::NonZeroU16};
 
-use crate::ptr::ContextPtr;
+use crate::{ptr::ContextPtr, TargetSpec};
 
 #[derive(Clone, Copy)]
 pub struct ContextId<'ctx>(PhantomData<fn() -> *mut &'ctx mut ()>);
@@ -9,6 +9,7 @@ mod ty;
 
 struct ContextData<'ctx> {
     id: ContextId<'ctx>,
+    target: TargetSpec,
     bump: bumpme::Bump,
     ty: ty::TypeContextData<'ctx>,
 }
@@ -23,8 +24,9 @@ pub struct TypeContext<'ctx>(ContextPtr<'ctx, ty::TypeContextData<'ctx>>);
 pub struct AllocContext<'ctx>(ContextPtr<'ctx, bumpme::Bump>);
 
 impl<'ctx> Context<'ctx> {
-    pub fn with<T>(f: impl FnOnce(Context<'_>) -> T) -> T {
-        let ctx_data: ContextData = init::try_init_on_stack(()).unwrap_or_else(|inf| match inf {});
+    pub fn with<T>(target: TargetSpec, f: impl FnOnce(Context<'_>) -> T) -> T {
+        let ctx_data: ContextData =
+            init::try_init_on_stack(target).unwrap_or_else(|inf| match inf {});
         let ctx = Context(ContextPtr::from_ref(ctx_data.id, &ctx_data));
         f(ctx)
     }
@@ -47,11 +49,18 @@ impl<'ctx> Context<'ctx> {
         let ptr = unsafe { core::ptr::addr_of!((*ptr).bump) };
         AllocContext(unsafe { ContextPtr::new_unchecked(self.id(), ptr) })
     }
-}
 
-impl<'ctx> TypeContext<'ctx> {
-    pub const fn id(self) -> ContextId<'ctx> {
-        ContextId(PhantomData)
+    #[inline]
+    pub const fn unit_ty(self) -> crate::types::UnitTy<'ctx> {
+        self.type_ctx().unit()
+    }
+
+    #[inline]
+    pub fn int_ty(self, bits: u16) -> crate::types::IntTy<'ctx> {
+        self.type_ctx().int(
+            self.alloc_ctx(),
+            NonZeroU16::new(bits).expect("cannot construct a zero-sized int type"),
+        )
     }
 }
 
@@ -76,19 +85,21 @@ impl<'ctx> AllocContext<'ctx> {
     }
 }
 
-impl<'ctx> init::Ctor for ContextData<'ctx> {
+impl<'ctx> init::Ctor<TargetSpec> for ContextData<'ctx> {
     type Error = core::convert::Infallible;
 
     fn try_init(
         ptr: init::ptr::Uninit<Self>,
-        (): (),
+        spec: TargetSpec,
     ) -> Result<init::ptr::Init<Self>, Self::Error> {
         init::init_struct! {
             ptr => Self {
                 id: init::init_fn(|ptr| ptr.write( ContextId(PhantomData))),
+                target: init::init_fn(|ptr| ptr.write(spec)),
                 bump: init::init_fn(|ptr| ptr.write(bumpme::Bump::new())),
                 ty: ty::TypeContextDataArgs {
                     alloc:  AllocContext(unsafe { ContextPtr::new_unchecked(*id, bump.as_ptr()) }),
+                    target: &target,
                 }
             }
         }
