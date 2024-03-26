@@ -1,12 +1,13 @@
-use super::{AllocContext, ContextId};
+use crate::types;
+
+use super::AllocContext;
 
 pub(super) struct TypeContextData<'ctx> {
-    id: ContextId<'ctx>,
+    pub unit: types::UnitTy<'ctx>,
 }
 
 pub(super) struct TypeContextDataArgs<'ctx> {
-    pub id: ContextId<'ctx>,
-    pub bump: AllocContext<'ctx>,
+    pub alloc: AllocContext<'ctx>,
 }
 
 impl<'ctx> init::Ctor<TypeContextDataArgs<'ctx>> for TypeContextData<'ctx> {
@@ -18,7 +19,7 @@ impl<'ctx> init::Ctor<TypeContextDataArgs<'ctx>> for TypeContextData<'ctx> {
     ) -> Result<init::ptr::Init<'a, Self>, Self::Error> {
         init::init_struct! {
             ptr => Self {
-                id: init::init_fn(|ptr| ptr.write(args.id))
+                unit: ((), args.alloc)
             }
         }
     }

@@ -61,10 +61,9 @@ impl<'ctx> AllocContext<'ctx> {
         ContextId(PhantomData)
     }
 
-    pub(crate) fn init<T, Args, L>(self, args: Args) -> ContextPtr<'ctx, T>
+    pub(crate) fn try_init<T, Args, L>(self, args: Args) -> Result<ContextPtr<'ctx, T>, T::Error>
     where
         T: ?Sized + init::Ctor<Args>,
-        T::Error: core::fmt::Debug,
         L: init::layout_provider::LayoutProvider<T, Args>,
     {
         let layout = L::layout_for(&args).expect("could not construct layout");
@@ -72,8 +71,8 @@ impl<'ctx> AllocContext<'ctx> {
         let ptr = bump.alloc_layout(layout).into_raw();
         let ptr = unsafe { L::cast(ptr, &args) };
         let ptr = unsafe { init::ptr::Uninit::from_raw(ptr.as_ptr()) };
-        let ptr = ptr.try_init(args).unwrap().into_raw();
-        unsafe { ContextPtr::new_unchecked(self.id(), ptr) }
+        let ptr = ptr.try_init(args)?.into_raw();
+        Ok(unsafe { ContextPtr::new_unchecked(self.id(), ptr) })
     }
 }
 
@@ -89,8 +88,7 @@ impl<'ctx> init::Ctor for ContextData<'ctx> {
                 id: init::init_fn(|ptr| ptr.write( ContextId(PhantomData))),
                 bump: init::init_fn(|ptr| ptr.write(bumpme::Bump::new())),
                 ty: ty::TypeContextDataArgs {
-                    id: *id,
-                    bump:  AllocContext(unsafe { ContextPtr::new_unchecked(*id, bump.as_ptr()) }),
+                    alloc:  AllocContext(unsafe { ContextPtr::new_unchecked(*id, bump.as_ptr()) }),
                 }
             }
         }
