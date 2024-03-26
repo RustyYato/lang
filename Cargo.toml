@@ -2,4 +2,8 @@
 
 resolver = "2"
 
-members = []
+members = ["context"]
+
+[workspace.dependencies]
+init = { git = "https://github.com/RustyYato/init.git", branch = "main" }
+bumpme = { git = "https://github.com/RustyYato/bumpme.git", branch = "main" }
