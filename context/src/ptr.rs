@@ -27,6 +27,14 @@ impl<'ctx, T: ?Sized> ContextPtr<'ctx, T> {
         self.0.as_ptr()
     }
 
+    pub const fn as_ref(self) -> &'ctx T {
+        unsafe { self.0.as_ref() }
+    }
+
+    pub const unsafe fn cast<U>(self) -> ContextPtr<'ctx, U> {
+        ContextPtr(self.0.cast(), self.1)
+    }
+
     pub fn id(self) -> ContextId<'ctx> {
         self.1
     }

@@ -55,6 +55,28 @@ impl<'ctx> TypeContext<'ctx> {
     }
 }
 
+impl<'ctx> AllocContext<'ctx> {
+    #[inline]
+    pub const fn id(self) -> ContextId<'ctx> {
+        ContextId(PhantomData)
+    }
+
+    pub(crate) fn init<T, Args, L>(self, args: Args) -> ContextPtr<'ctx, T>
+    where
+        T: ?Sized + init::Ctor<Args>,
+        T::Error: core::fmt::Debug,
+        L: init::layout_provider::LayoutProvider<T, Args>,
+    {
+        let layout = L::layout_for(&args).expect("could not construct layout");
+        let bump = unsafe { &*self.0.as_ptr() };
+        let ptr = bump.alloc_layout(layout).into_raw();
+        let ptr = unsafe { L::cast(ptr, &args) };
+        let ptr = unsafe { init::ptr::Uninit::from_raw(ptr.as_ptr()) };
+        let ptr = ptr.try_init(args).unwrap().into_raw();
+        unsafe { ContextPtr::new_unchecked(self.id(), ptr) }
+    }
+}
+
 impl<'ctx> init::Ctor for ContextData<'ctx> {
     type Error = core::convert::Infallible;
 
