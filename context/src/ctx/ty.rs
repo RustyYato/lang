@@ -23,6 +23,8 @@ pub(super) struct TypeContextData<'ctx> {
     pub ieee64: types::FloatTy<'ctx>,
     pub ieee128: types::FloatTy<'ctx>,
     pub ptr: types::PointerTy<'ctx>,
+
+    aggregate_cache: UnsafeCell<istr::IBytesMap<types::AggregateTy<'ctx>>>,
 }
 
 impl<'ctx> super::TypeContext<'ctx> {
@@ -74,8 +76,14 @@ impl<'ctx> super::TypeContext<'ctx> {
         }
     }
 
-    #[inline]
-    pub fn aggregate<I: IntoIterator<Item = types::AggregateField<'ctx>>>(
+    pub fn aggregate(self, name: istr::IBytes) -> Option<types::AggregateTy<'ctx>> {
+        let cache = self.0.as_ref().aggregate_cache.get();
+        let cache = unsafe { &*cache };
+
+        cache.get(&name).copied()
+    }
+
+    pub fn create_aggregate<I: IntoIterator<Item = types::AggregateField<'ctx>>>(
         self,
         alloc: AllocContext<'ctx>,
         name: istr::IBytes,
@@ -84,11 +92,22 @@ impl<'ctx> super::TypeContext<'ctx> {
     where
         I::IntoIter: ExactSizeIterator,
     {
-        init::try_init_on_stack(types::AggregateTy::init_with::<
+        debug_assert!(self.aggregate(name).is_none());
+
+        let value = init::try_init_on_stack(types::AggregateTy::init_with::<
             _,
             types::AggregateLayoutProvider,
-        >(types::AggregateTy::init_data(name, fields), alloc))
-        .unwrap()
+        >(
+            types::AggregateTy::init_data(name, fields), alloc
+        ))
+        .expect("Invalid implementation of ExactSizeIterator");
+
+        let cache = self.0.as_ref().aggregate_cache.get();
+        let cache = unsafe { &mut *cache };
+
+        cache.insert(name, value);
+
+        value
     }
 }
 

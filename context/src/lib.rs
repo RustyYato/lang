@@ -4,7 +4,7 @@ mod ptr;
 
 pub mod types;
 
-pub use ctx::{Context, TypeContext};
+pub use ctx::{AllocContext, Context, ContextId, TypeContext};
 
 pub struct TargetSpec {
     pub pointer_size_bytes: u8,
