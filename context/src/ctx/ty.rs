@@ -34,6 +34,10 @@ impl<'ctx> super::TypeContext<'ctx> {
         self.0.as_ref().unit
     }
 
+    pub const fn pointer(self) -> types::PointerTy<'ctx> {
+        self.0.as_ref().ptr
+    }
+
     #[inline]
     pub fn int(self, alloc: AllocContext<'ctx>, bits: NonZeroU16) -> types::IntTy<'ctx> {
         let ty = self.0.as_ref();
@@ -56,6 +60,17 @@ impl<'ctx> super::TypeContext<'ctx> {
         *cache.entry(bits.get()).or_insert_with(|| {
             init::try_init_on_stack((bits.get(), alloc)).unwrap_or_else(|inf| match inf {})
         })
+    }
+
+    #[inline]
+    pub const fn float(self, kind: types::FloatKind) -> types::FloatTy<'ctx> {
+        let ty = self.0.as_ref();
+        match kind {
+            types::FloatKind::Ieee16Bit => ty.ieee16,
+            types::FloatKind::Ieee32Bit => ty.ieee32,
+            types::FloatKind::Ieee64Bit => ty.ieee64,
+            types::FloatKind::Ieee128Bit => ty.ieee128,
+        }
     }
 }
 
