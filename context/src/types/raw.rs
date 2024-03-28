@@ -86,7 +86,11 @@ impl<'ctx, T: ?Sized> Type<'ctx, T> {
     }
 
     pub const fn header(self) -> &'ctx TypeHeader {
-        self.erase().0.as_ref()
+        self.erase().get()
+    }
+
+    pub const fn get(self) -> &'ctx T {
+        self.0.as_ref()
     }
 }
 
@@ -96,7 +100,7 @@ impl TypeHeader {
     }
 }
 
-impl<'ctx> Type<'ctx> {
+impl<'ctx> super::Type<'ctx> {
     pub fn try_cast<T: ?Sized + TypeData<'ctx>>(self) -> Option<Type<'ctx, T::Target>> {
         T::try_cast(self)
     }

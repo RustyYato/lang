@@ -8,6 +8,7 @@ pub struct FloatData {
     pub kind: FloatKind,
 }
 
+#[derive(Debug, Clone, Copy)]
 pub enum FloatKind {
     Ieee16Bit,
     Ieee32Bit,
@@ -31,4 +32,10 @@ impl init::Ctor<FloatKind> for FloatData {
 
 unsafe impl<'ctx> BasicTypeData<'ctx> for FloatData {
     const KIND: TypeKind = TypeKind::Float;
+}
+
+impl FloatTy<'_> {
+    pub const fn float_kind(self) -> FloatKind {
+        self.get().kind
+    }
 }

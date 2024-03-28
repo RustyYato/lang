@@ -27,3 +27,9 @@ impl init::Ctor<u16> for IntData {
 unsafe impl<'ctx> BasicTypeData<'ctx> for IntData {
     const KIND: TypeKind = TypeKind::Int;
 }
+
+impl IntTy<'_> {
+    pub const fn bits(self) -> NonZeroU16 {
+        self.get().bits
+    }
+}

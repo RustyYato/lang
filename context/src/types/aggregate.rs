@@ -13,6 +13,7 @@ pub struct AggregateData<'ctx> {
     pub fields: [AggregateField<'ctx>],
 }
 
+#[derive(Clone, Copy)]
 pub struct AggregateField<'ctx> {
     pub name: istr::IBytes,
     pub field: Type<'ctx>,
@@ -40,7 +41,7 @@ impl From<init::slice::IterInitError<core::convert::Infallible>> for NotEnoughFi
 }
 
 impl<'ctx> AggregateTy<'ctx> {
-    pub fn init_data<I>(name: istr::IBytes, iter: I) -> AggregateDataInit<I::IntoIter>
+    pub(crate) fn init_data<I>(name: istr::IBytes, iter: I) -> AggregateDataInit<I::IntoIter>
     where
         I: IntoIterator<Item = AggregateField<'ctx>>,
         I::IntoIter: ExactSizeIterator,
@@ -51,6 +52,14 @@ impl<'ctx> AggregateTy<'ctx> {
             len: iter.len(),
             iter,
         }
+    }
+
+    pub fn name(self) -> istr::IBytes {
+        self.get().name
+    }
+
+    pub fn fields(self) -> &'ctx [AggregateField<'ctx>] {
+        &self.get().fields
     }
 }
 
@@ -67,7 +76,7 @@ impl<'ctx> AggregateData<'ctx> {
                 ptr => Self {
                     name: init::init(name),
                     header: init::init_fn(|ptr| ptr.write(TypeHeader::of::<Self>())),
-                    fields: init::slice::IterArgs::new(iter.into_iter().map(|x| init::init_fn(|ptr| ptr.write(x)))),
+                    fields: init::slice::IterArgs::new(iter.into_iter().map(init::init)),
                     len: fields.len(),
                 }
             }
