@@ -184,6 +184,7 @@ impl<'ctx> init::Ctor<TypeContextDataArgs<'ctx, '_>> for TypeContextData<'ctx> {
                     ptr.write(arg)
                 }),
                 int_cache: init::init(UnsafeCell::new(int_cache_)),
+                aggregate_cache: init::init(Default::default()),
             }
         }
     }

@@ -56,11 +56,36 @@ impl<'ctx> Context<'ctx> {
     }
 
     #[inline]
+    pub const fn pointer_ty(self) -> crate::types::PointerTy<'ctx> {
+        self.type_ctx().pointer()
+    }
+
+    #[inline]
     pub fn int_ty(self, bits: u16) -> crate::types::IntTy<'ctx> {
         self.type_ctx().int(
             self.alloc_ctx(),
             NonZeroU16::new(bits).expect("cannot construct a zero-sized int type"),
         )
+    }
+
+    #[inline]
+    pub const fn float_16_ty(self) -> crate::types::FloatTy<'ctx> {
+        self.type_ctx().float(crate::types::FloatKind::Ieee16Bit)
+    }
+
+    #[inline]
+    pub const fn float_32_ty(self) -> crate::types::FloatTy<'ctx> {
+        self.type_ctx().float(crate::types::FloatKind::Ieee32Bit)
+    }
+
+    #[inline]
+    pub const fn float_64_ty(self) -> crate::types::FloatTy<'ctx> {
+        self.type_ctx().float(crate::types::FloatKind::Ieee64Bit)
+    }
+
+    #[inline]
+    pub const fn float_128_ty(self) -> crate::types::FloatTy<'ctx> {
+        self.type_ctx().float(crate::types::FloatKind::Ieee128Bit)
     }
 }
 
