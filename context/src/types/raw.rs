@@ -53,6 +53,8 @@ unsafe impl<'ctx, T: ?Sized + TypeData<'ctx>> TypeData<'ctx> for RawType<'ctx, T
     }
 }
 
+/// NOTE: This type is only visible in documentation so you can see methods on it's aliases
+/// It will not actually be available while programming except through those aliases
 pub struct RawType<'ctx, T: ?Sized = TypeHeader>(ContextPtr<'ctx, T>);
 
 impl<T: ?Sized> Copy for RawType<'_, T> {}
@@ -69,14 +71,16 @@ impl<'ctx, T: ?Sized + BasicTypeData<'ctx>> RawType<'ctx, T> {
 }
 
 impl<'ctx, T: ?Sized> RawType<'ctx, T> {
-    pub const fn erase(self) -> RawType<'ctx> {
+    pub const fn erase(self) -> super::Type<'ctx> {
         RawType(unsafe { self.0.cast() })
     }
 
+    #[doc(hidden)]
     pub const fn into_raw(self) -> *const T {
         self.0.as_ptr()
     }
 
+    #[doc(hidden)]
     pub const unsafe fn from_raw(id: ContextId<'ctx>, ptr: *const T) -> Self {
         Self(ContextPtr::new_unchecked(id, ptr))
     }
@@ -85,6 +89,7 @@ impl<'ctx, T: ?Sized> RawType<'ctx, T> {
         self.0.id()
     }
 
+    #[doc(hidden)]
     pub const fn header(self) -> &'ctx TypeHeader {
         self.erase().get()
     }
@@ -125,7 +130,7 @@ impl<'ctx> super::Type<'ctx> {
 }
 
 impl<'ctx, T: ?Sized> RawType<'ctx, T> {
-    pub fn init<A>(
+    pub(crate) fn init<A>(
         args: A,
         alloc: AllocContext<'ctx>,
     ) -> impl init::Initializer<Self, Error = A::Error>

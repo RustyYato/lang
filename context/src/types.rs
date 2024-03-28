@@ -14,3 +14,6 @@ pub use float::{FloatKind, FloatTy};
 pub use int::IntTy;
 pub use pointer::PointerTy;
 pub use unit::UnitTy;
+
+#[cfg(doc)]
+pub use raw::{BasicTypeData, RawType, TypeData};
