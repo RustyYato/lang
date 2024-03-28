@@ -58,7 +58,8 @@ impl<'ctx> super::TypeContext<'ctx> {
         let cache = unsafe { &mut *self.0.as_ref().int_cache.get() };
 
         *cache.entry(bits.get()).or_insert_with(|| {
-            init::try_init_on_stack((bits.get(), alloc)).unwrap_or_else(|inf| match inf {})
+            init::try_init_on_stack(types::IntTy::init(bits.get(), alloc))
+                .unwrap_or_else(|inf| match inf {})
         })
     }
 
@@ -71,6 +72,23 @@ impl<'ctx> super::TypeContext<'ctx> {
             types::FloatKind::Ieee64Bit => ty.ieee64,
             types::FloatKind::Ieee128Bit => ty.ieee128,
         }
+    }
+
+    #[inline]
+    pub fn aggregate<I: IntoIterator<Item = types::AggregateField<'ctx>>>(
+        self,
+        alloc: AllocContext<'ctx>,
+        name: istr::IBytes,
+        fields: I,
+    ) -> types::AggregateTy<'ctx>
+    where
+        I::IntoIter: ExactSizeIterator,
+    {
+        init::try_init_on_stack(types::AggregateTy::init_with::<
+            _,
+            types::AggregateLayoutProvider,
+        >(types::AggregateTy::init_data(name, fields), alloc))
+        .unwrap()
     }
 }
 
@@ -93,19 +111,19 @@ impl<'ctx> init::Ctor<TypeContextDataArgs<'ctx, '_>> for TypeContextData<'ctx> {
 
         init::init_struct! {
             ptr => Self {
-                unit: ((), args.alloc),
-                ptr: ((), args.alloc),
-                int1: (1, args.alloc),
-                int8: (8, args.alloc),
-                int16: (16, args.alloc),
-                int32: (32, args.alloc),
-                int64: (64, args.alloc),
-                int128: (128, args.alloc),
-                int256: (256, args.alloc),
-                ieee16: (types::FloatKind::Ieee16Bit, args.alloc),
-                ieee32: (types::FloatKind::Ieee32Bit, args.alloc),
-                ieee64: (types::FloatKind::Ieee64Bit, args.alloc),
-                ieee128: (types::FloatKind::Ieee128Bit, args.alloc),
+                unit: types::UnitTy::init((), args.alloc),
+                ptr: types::PointerTy::init((), args.alloc),
+                int1: types::IntTy::init(1, args.alloc),
+                int8: types::IntTy::init(8, args.alloc),
+                int16: types::IntTy::init(16, args.alloc),
+                int32: types::IntTy::init(32, args.alloc),
+                int64: types::IntTy::init(64, args.alloc),
+                int128: types::IntTy::init(128, args.alloc),
+                int256: types::IntTy::init(256, args.alloc),
+                ieee16: types::FloatTy::init(types::FloatKind::Ieee16Bit, args.alloc),
+                ieee32: types::FloatTy::init(types::FloatKind::Ieee32Bit, args.alloc),
+                ieee64: types::FloatTy::init(types::FloatKind::Ieee64Bit, args.alloc),
+                ieee128: types::FloatTy::init(types::FloatKind::Ieee128Bit, args.alloc),
                 intptr: init::init_fn(|ptr| {
                     let arg = match args.target.pointer_size_bytes {
                         1 => *int8,
@@ -116,7 +134,7 @@ impl<'ctx> init::Ctor<TypeContextDataArgs<'ctx, '_>> for TypeContextData<'ctx> {
                         32 => *int256,
                         bytes => {
                             let bits = 8 * u16::from(bytes);
-                            let arg = ptr.init((bits, args.alloc));
+                            let arg = ptr.init(types::IntTy::init(bits, args.alloc));
                             int_cache_.insert(bits, *arg);
                             return arg
                         }
@@ -137,7 +155,7 @@ impl<'ctx> init::Ctor<TypeContextDataArgs<'ctx, '_>> for TypeContextData<'ctx> {
                             32 => *int256,
                             bytes => {
                                 let bits = 8 * u16::from(bytes);
-                                let arg = ptr.init((bits, args.alloc));
+                                let arg = ptr.init(types::IntTy::init(bits, args.alloc));
                                 int_cache_.insert(bits, *arg);
                                 return arg
                             }
@@ -146,7 +164,7 @@ impl<'ctx> init::Ctor<TypeContextDataArgs<'ctx, '_>> for TypeContextData<'ctx> {
 
                     ptr.write(arg)
                 }),
-                int_cache: init::init_fn(|ptr| ptr.write(UnsafeCell::new(int_cache_))),
+                int_cache: init::init(UnsafeCell::new(int_cache_)),
             }
         }
     }

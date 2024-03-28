@@ -8,7 +8,7 @@ pub struct TypeHeader {
 }
 
 impl TypeHeader {
-    pub const fn of<'ctx, T: BasicTypeData<'ctx>>() -> Self {
+    pub const fn of<'ctx, T: ?Sized + BasicTypeData<'ctx>>() -> Self {
         Self { kind: T::KIND }
     }
 }
@@ -20,6 +20,7 @@ pub enum TypeKind {
     Int,
     Float,
     Pointer,
+    Aggregate,
 }
 
 pub unsafe trait BasicTypeData<'ctx>: 'ctx {
@@ -119,16 +120,29 @@ impl<'ctx> Type<'ctx> {
     }
 }
 
-impl<'ctx, T: BasicTypeData<'ctx> + init::Ctor<A>, A> init::Ctor<(A, AllocContext<'ctx>)>
-    for Type<'ctx, T>
-{
-    type Error = T::Error;
+impl<'ctx, T: ?Sized> Type<'ctx, T> {
+    pub fn init<A>(
+        args: A,
+        alloc: AllocContext<'ctx>,
+    ) -> impl init::Initializer<Self, Error = A::Error>
+    where
+        A: init::Initializer<T>,
+        T: Sized,
+    {
+        Self::init_with::<A, init::layout_provider::SizedLayout>(args, alloc)
+    }
 
-    fn try_init<'a>(
-        ptr: init::ptr::Uninit<'a, Self>,
-        (args, alloc): (A, AllocContext<'ctx>),
-    ) -> Result<init::ptr::Init<'a, Self>, Self::Error> {
-        let ctx_ptr = alloc.try_init::<T, A, init::layout_provider::SizedLayout>(args)?;
-        Ok(ptr.write(Self(ctx_ptr)))
+    pub fn init_with<A, L>(
+        args: A,
+        alloc: AllocContext<'ctx>,
+    ) -> impl init::Initializer<Self, Error = A::Error>
+    where
+        A: init::Initializer<T>,
+        L: init::layout_provider::LayoutProvider<T, A>,
+    {
+        init::try_init_fn(move |ptr| {
+            let ctx_ptr = alloc.try_init::<T, A, L>(args)?;
+            Ok(ptr.write(Self(ctx_ptr)))
+        })
     }
 }

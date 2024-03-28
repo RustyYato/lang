@@ -70,9 +70,10 @@ impl<'ctx> AllocContext<'ctx> {
         ContextId(PhantomData)
     }
 
-    pub(crate) fn try_init<T, Args, L>(self, args: Args) -> Result<ContextPtr<'ctx, T>, T::Error>
+    pub(crate) fn try_init<T, Args, L>(self, args: Args) -> Result<ContextPtr<'ctx, T>, Args::Error>
     where
-        T: ?Sized + init::Ctor<Args>,
+        T: ?Sized,
+        Args: init::Initializer<T>,
         L: init::layout_provider::LayoutProvider<T, Args>,
     {
         let layout = L::layout_for(&args).expect("could not construct layout");
