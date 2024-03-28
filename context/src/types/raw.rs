@@ -18,6 +18,7 @@ impl TypeHeader {
 pub enum TypeKind {
     Unit,
     Int,
+    Float,
 }
 
 pub unsafe trait BasicTypeData<'ctx>:

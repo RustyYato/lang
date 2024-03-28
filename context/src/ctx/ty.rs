@@ -17,6 +17,11 @@ pub(super) struct TypeContextData<'ctx> {
     pub intptr_diff: types::IntTy<'ctx>,
     int_cache:
         UnsafeCell<HashMap<u16, types::IntTy<'ctx>, BuildHasherDefault<rustc_hash::FxHasher>>>,
+
+    pub ieee16: types::FloatTy<'ctx>,
+    pub ieee32: types::FloatTy<'ctx>,
+    pub ieee64: types::FloatTy<'ctx>,
+    pub ieee128: types::FloatTy<'ctx>,
 }
 
 impl<'ctx> super::TypeContext<'ctx> {
@@ -80,6 +85,10 @@ impl<'ctx> init::Ctor<TypeContextDataArgs<'ctx, '_>> for TypeContextData<'ctx> {
                 int64: (64, args.alloc),
                 int128: (128, args.alloc),
                 int256: (256, args.alloc),
+                ieee16: (types::FloatKind::Ieee16Bit, args.alloc),
+                ieee32: (types::FloatKind::Ieee32Bit, args.alloc),
+                ieee64: (types::FloatKind::Ieee64Bit, args.alloc),
+                ieee128: (types::FloatKind::Ieee128Bit, args.alloc),
                 intptr: init::init_fn(|ptr| {
                     let arg = match args.target.pointer_size_bytes {
                         1 => *int8,
