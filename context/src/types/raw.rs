@@ -19,6 +19,7 @@ pub enum TypeKind {
     Unit,
     Int,
     Float,
+    Pointer,
 }
 
 pub unsafe trait BasicTypeData<'ctx>:

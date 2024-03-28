@@ -22,6 +22,7 @@ pub(super) struct TypeContextData<'ctx> {
     pub ieee32: types::FloatTy<'ctx>,
     pub ieee64: types::FloatTy<'ctx>,
     pub ieee128: types::FloatTy<'ctx>,
+    pub ptr: types::PointerTy<'ctx>,
 }
 
 impl<'ctx> super::TypeContext<'ctx> {
@@ -78,6 +79,7 @@ impl<'ctx> init::Ctor<TypeContextDataArgs<'ctx, '_>> for TypeContextData<'ctx> {
         init::init_struct! {
             ptr => Self {
                 unit: ((), args.alloc),
+                ptr: ((), args.alloc),
                 int1: (1, args.alloc),
                 int8: (8, args.alloc),
                 int16: (16, args.alloc),
