@@ -21,7 +21,5 @@ impl init::Ctor for PointerData {
 }
 
 unsafe impl<'ctx> BasicTypeData<'ctx> for PointerData {
-    type InitArgs = ();
-    type LayoutProvider = init::layout_provider::SizedLayout;
     const KIND: TypeKind = TypeKind::Pointer;
 }

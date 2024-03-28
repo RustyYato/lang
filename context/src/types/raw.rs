@@ -22,12 +22,7 @@ pub enum TypeKind {
     Pointer,
 }
 
-pub unsafe trait BasicTypeData<'ctx>:
-    TypeData<'ctx, Target = Self> + init::Ctor<Self::InitArgs>
-{
-    type InitArgs;
-    type LayoutProvider: init::layout_provider::LayoutProvider<Self, Self::InitArgs>;
-
+pub unsafe trait BasicTypeData<'ctx>: 'ctx {
     const KIND: TypeKind;
 }
 
@@ -124,16 +119,16 @@ impl<'ctx> Type<'ctx> {
     }
 }
 
-impl<'ctx, T: ?Sized + BasicTypeData<'ctx>> init::Ctor<(T::InitArgs, AllocContext<'ctx>)>
+impl<'ctx, T: BasicTypeData<'ctx> + init::Ctor<A>, A> init::Ctor<(A, AllocContext<'ctx>)>
     for Type<'ctx, T>
 {
     type Error = T::Error;
 
     fn try_init<'a>(
         ptr: init::ptr::Uninit<'a, Self>,
-        (args, alloc): (T::InitArgs, AllocContext<'ctx>),
+        (args, alloc): (A, AllocContext<'ctx>),
     ) -> Result<init::ptr::Init<'a, Self>, Self::Error> {
-        let ctx_ptr = alloc.try_init::<T, T::InitArgs, T::LayoutProvider>(args)?;
+        let ctx_ptr = alloc.try_init::<T, A, init::layout_provider::SizedLayout>(args)?;
         Ok(ptr.write(Self(ctx_ptr)))
     }
 }

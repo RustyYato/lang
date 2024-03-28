@@ -25,7 +25,5 @@ impl init::Ctor<u16> for IntData {
 }
 
 unsafe impl<'ctx> BasicTypeData<'ctx> for IntData {
-    type InitArgs = u16;
-    type LayoutProvider = init::layout_provider::SizedLayout;
     const KIND: TypeKind = TypeKind::Int;
 }

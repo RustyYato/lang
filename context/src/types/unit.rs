@@ -21,7 +21,5 @@ impl init::Ctor for UnitData {
 }
 
 unsafe impl<'ctx> BasicTypeData<'ctx> for UnitData {
-    type InitArgs = ();
-    type LayoutProvider = init::layout_provider::SizedLayout;
     const KIND: TypeKind = TypeKind::Unit;
 }

@@ -30,7 +30,5 @@ impl init::Ctor<FloatKind> for FloatData {
 }
 
 unsafe impl<'ctx> BasicTypeData<'ctx> for FloatData {
-    type InitArgs = FloatKind;
-    type LayoutProvider = init::layout_provider::SizedLayout;
     const KIND: TypeKind = TypeKind::Float;
 }
