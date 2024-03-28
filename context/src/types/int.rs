@@ -18,7 +18,7 @@ impl init::Ctor<u16> for IntData {
         bits: u16,
     ) -> Result<init::ptr::Init<Self>, Self::Error> {
         Ok(ptr.write(Self {
-            header: TypeHeader::new(TypeKind::Unit),
+            header: TypeHeader::of::<Self>(),
             bits: NonZeroU16::new(bits).expect("you must pass a non-zero u16"),
         }))
     }

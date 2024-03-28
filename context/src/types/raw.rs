@@ -8,8 +8,8 @@ pub struct TypeHeader {
 }
 
 impl TypeHeader {
-    pub const fn new(kind: TypeKind) -> Self {
-        Self { kind }
+    pub const fn of<'ctx, T: BasicTypeData<'ctx>>() -> Self {
+        Self { kind: T::KIND }
     }
 }
 

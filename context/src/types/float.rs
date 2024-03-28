@@ -23,7 +23,7 @@ impl init::Ctor<FloatKind> for FloatData {
         kind: FloatKind,
     ) -> Result<init::ptr::Init<Self>, Self::Error> {
         Ok(ptr.write(Self {
-            header: TypeHeader::new(TypeKind::Unit),
+            header: TypeHeader::of::<Self>(),
             kind,
         }))
     }
