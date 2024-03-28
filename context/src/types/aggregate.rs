@@ -1,9 +1,9 @@
 use core::mem::offset_of;
 use std::alloc::Layout;
 
-use super::raw::{BasicTypeData, Type, TypeData, TypeHeader, TypeKind};
+use super::raw::{BasicTypeData, RawType, TypeData, TypeHeader, TypeKind};
 
-pub type AggregateTy<'ctx> = Type<'ctx, AggregateData<'ctx>>;
+pub type AggregateTy<'ctx> = RawType<'ctx, AggregateData<'ctx>>;
 
 #[repr(C)]
 pub struct AggregateData<'ctx> {
@@ -16,7 +16,7 @@ pub struct AggregateData<'ctx> {
 #[derive(Clone, Copy)]
 pub struct AggregateField<'ctx> {
     pub name: istr::IBytes,
-    pub field: Type<'ctx>,
+    pub field: super::Type<'ctx>,
 }
 
 #[derive(Debug)]
@@ -91,7 +91,7 @@ unsafe impl<'ctx> BasicTypeData<'ctx> for AggregateData<'ctx> {
 unsafe impl<'ctx> TypeData<'ctx> for AggregateData<'ctx> {
     type Target = Self;
 
-    fn try_cast(ptr: Type<'ctx>) -> Option<Type<'ctx, Self::Target>> {
+    fn try_cast(ptr: RawType<'ctx>) -> Option<RawType<'ctx, Self::Target>> {
         if ptr.kind() != Self::KIND {
             return None;
         }
@@ -103,7 +103,7 @@ unsafe impl<'ctx> TypeData<'ctx> for AggregateData<'ctx> {
         let len = unsafe { ptr.cast::<usize>().byte_offset(len_offset as _).read() };
 
         let ptr = core::ptr::slice_from_raw_parts(ptr, len) as *const Self;
-        Some(unsafe { Type::from_raw(id, ptr) })
+        Some(unsafe { RawType::from_raw(id, ptr) })
     }
 }
 

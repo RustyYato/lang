@@ -1,6 +1,6 @@
-use super::raw::{BasicTypeData, Type, TypeHeader, TypeKind};
+use super::raw::{BasicTypeData, RawType, TypeHeader, TypeKind};
 
-pub type FloatTy<'ctx> = Type<'ctx, FloatData>;
+pub type FloatTy<'ctx> = RawType<'ctx, FloatData>;
 
 #[repr(C)]
 pub struct FloatData {

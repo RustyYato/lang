@@ -6,7 +6,7 @@ mod int;
 mod pointer;
 mod unit;
 
-pub type Type<'ctx> = raw::Type<'ctx>;
+pub type Type<'ctx> = raw::RawType<'ctx>;
 pub use raw::TypeKind;
 
 pub use aggregate::{AggregateField, AggregateLayoutProvider, AggregateTy};

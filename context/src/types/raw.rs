@@ -30,9 +30,9 @@ pub unsafe trait BasicTypeData<'ctx>: 'ctx {
 unsafe impl<'ctx, T: BasicTypeData<'ctx>> TypeData<'ctx> for T {
     type Target = Self;
 
-    fn try_cast(ptr: Type<'ctx>) -> Option<Type<'ctx, Self>> {
+    fn try_cast(ptr: RawType<'ctx>) -> Option<RawType<'ctx, Self>> {
         if ptr.kind() == T::KIND {
-            unsafe { Some(Type::from_raw(ptr.0.id(), ptr.into_raw().cast())) }
+            unsafe { Some(RawType::from_raw(ptr.0.id(), ptr.into_raw().cast())) }
         } else {
             None
         }
@@ -42,35 +42,35 @@ unsafe impl<'ctx, T: BasicTypeData<'ctx>> TypeData<'ctx> for T {
 pub unsafe trait TypeData<'ctx>: 'ctx {
     type Target: ?Sized;
 
-    fn try_cast(ptr: Type<'ctx>) -> Option<Type<'ctx, Self::Target>>;
+    fn try_cast(ptr: RawType<'ctx>) -> Option<RawType<'ctx, Self::Target>>;
 }
 
-unsafe impl<'ctx, T: ?Sized + TypeData<'ctx>> TypeData<'ctx> for Type<'ctx, T> {
+unsafe impl<'ctx, T: ?Sized + TypeData<'ctx>> TypeData<'ctx> for RawType<'ctx, T> {
     type Target = T::Target;
 
-    fn try_cast(ptr: Type<'ctx>) -> Option<Type<'ctx, Self::Target>> {
+    fn try_cast(ptr: RawType<'ctx>) -> Option<RawType<'ctx, Self::Target>> {
         ptr.try_cast::<T>()
     }
 }
 
-pub struct Type<'ctx, T: ?Sized = TypeHeader>(ContextPtr<'ctx, T>);
+pub struct RawType<'ctx, T: ?Sized = TypeHeader>(ContextPtr<'ctx, T>);
 
-impl<T: ?Sized> Copy for Type<'_, T> {}
-impl<T: ?Sized> Clone for Type<'_, T> {
+impl<T: ?Sized> Copy for RawType<'_, T> {}
+impl<T: ?Sized> Clone for RawType<'_, T> {
     fn clone(&self) -> Self {
         *self
     }
 }
 
-impl<'ctx, T: ?Sized + BasicTypeData<'ctx>> Type<'ctx, T> {
+impl<'ctx, T: ?Sized + BasicTypeData<'ctx>> RawType<'ctx, T> {
     pub const fn kind(self) -> TypeKind {
         T::KIND
     }
 }
 
-impl<'ctx, T: ?Sized> Type<'ctx, T> {
-    pub const fn erase(self) -> Type<'ctx> {
-        Type(unsafe { self.0.cast() })
+impl<'ctx, T: ?Sized> RawType<'ctx, T> {
+    pub const fn erase(self) -> RawType<'ctx> {
+        RawType(unsafe { self.0.cast() })
     }
 
     pub const fn into_raw(self) -> *const T {
@@ -101,11 +101,11 @@ impl TypeHeader {
 }
 
 impl<'ctx> super::Type<'ctx> {
-    pub fn try_cast<T: ?Sized + TypeData<'ctx>>(self) -> Option<Type<'ctx, T::Target>> {
+    pub fn try_cast<T: ?Sized + TypeData<'ctx>>(self) -> Option<RawType<'ctx, T::Target>> {
         T::try_cast(self)
     }
 
-    pub fn cast<T: ?Sized + TypeData<'ctx>>(self) -> Type<'ctx, T::Target> {
+    pub fn cast<T: ?Sized + TypeData<'ctx>>(self) -> RawType<'ctx, T::Target> {
         fn bad_cast<Target: ?Sized>(kind: TypeKind) -> ! {
             panic!(
                 "Could not cast {kind:?} to {}",
@@ -124,7 +124,7 @@ impl<'ctx> super::Type<'ctx> {
     }
 }
 
-impl<'ctx, T: ?Sized> Type<'ctx, T> {
+impl<'ctx, T: ?Sized> RawType<'ctx, T> {
     pub fn init<A>(
         args: A,
         alloc: AllocContext<'ctx>,

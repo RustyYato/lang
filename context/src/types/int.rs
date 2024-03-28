@@ -1,8 +1,8 @@
 use std::num::NonZeroU16;
 
-use super::raw::{BasicTypeData, Type, TypeHeader, TypeKind};
+use super::raw::{BasicTypeData, RawType, TypeHeader, TypeKind};
 
-pub type IntTy<'ctx> = Type<'ctx, IntData>;
+pub type IntTy<'ctx> = RawType<'ctx, IntData>;
 
 #[repr(C)]
 pub struct IntData {

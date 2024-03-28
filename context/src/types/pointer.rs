@@ -1,6 +1,6 @@
-use super::raw::{BasicTypeData, Type, TypeHeader, TypeKind};
+use super::raw::{BasicTypeData, RawType, TypeHeader, TypeKind};
 
-pub type PointerTy<'ctx> = Type<'ctx, PointerData>;
+pub type PointerTy<'ctx> = RawType<'ctx, PointerData>;
 
 #[repr(C)]
 pub struct PointerData {
