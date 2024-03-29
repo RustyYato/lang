@@ -10,8 +10,12 @@ mod ty;
 struct ContextData<'ctx> {
     id: ContextId<'ctx>,
     target: TargetSpec,
-    bump: bumpme::Bump,
     ty: ty::TypeContextData<'ctx>,
+    // put Bump last so if anything tries to access it on drop, the data will not be
+    // used after bump is dropped. Thus hardenning against use after frees.
+    // We currently cannot guarantee this on stable, because #[may_dangle] is not stable
+    // so hashbrown doesn't implement it on stable.
+    bump: bumpme::Bump,
 }
 
 #[derive(Clone, Copy)]
@@ -27,7 +31,9 @@ impl<'ctx> Context<'ctx> {
     pub fn with<T>(target: TargetSpec, f: impl FnOnce(Context<'_>) -> T) -> T {
         let ctx_data: ContextData =
             init::try_init_on_stack(target).unwrap_or_else(|inf| match inf {});
-        let ctx = Context(ContextPtr::from_ref(ctx_data.id, &ctx_data));
+        let ctx = Context(unsafe {
+            ContextPtr::new_unchecked(ctx_data.id, core::ptr::addr_of!(ctx_data))
+        });
         f(ctx)
     }
 
@@ -45,9 +51,8 @@ impl<'ctx> Context<'ctx> {
 
     #[inline]
     pub const fn alloc_ctx(self) -> AllocContext<'ctx> {
-        let ptr = self.0.as_ptr();
-        let ptr = unsafe { core::ptr::addr_of!((*ptr).bump) };
-        AllocContext(unsafe { ContextPtr::new_unchecked(self.id(), ptr) })
+        let ptr = self.0.as_ref();
+        AllocContext(ContextPtr::from_ref(self.id(), &ptr.bump))
     }
 
     #[inline]
@@ -114,15 +119,15 @@ impl<'ctx> AllocContext<'ctx> {
 impl<'ctx> init::Ctor<TargetSpec> for ContextData<'ctx> {
     type Error = core::convert::Infallible;
 
-    fn try_init(
-        ptr: init::ptr::Uninit<Self>,
+    fn try_init<'a>(
+        ptr: init::ptr::Uninit<'a, Self>,
         spec: TargetSpec,
-    ) -> Result<init::ptr::Init<Self>, Self::Error> {
+    ) -> Result<init::ptr::Init<'a, Self>, Self::Error> {
         init::init_struct! {
             ptr => Self {
                 id: init::init_fn(|ptr| ptr.write( ContextId(PhantomData))),
-                target: init::init_fn(|ptr| ptr.write(spec)),
-                bump: init::init_fn(|ptr| ptr.write(bumpme::Bump::new())),
+                target: init::init(spec),
+                bump: init::init(bumpme::Bump::new()),
                 ty: ty::TypeContextDataArgs {
                     alloc:  AllocContext(unsafe { ContextPtr::new_unchecked(*id, bump.as_ptr()) }),
                     target: &target,

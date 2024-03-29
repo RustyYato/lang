@@ -12,8 +12,11 @@ impl<T: ?Sized> Clone for ContextPtr<'_, T> {
 }
 
 impl<'ctx, T: ?Sized> ContextPtr<'ctx, T> {
-    pub fn from_ref(id: ContextId<'ctx>, ptr: &'ctx T) -> Self {
-        Self(NonNull::from(ptr), id)
+    pub const fn from_ref(id: ContextId<'ctx>, ptr: &'ctx T) -> Self {
+        Self(
+            unsafe { NonNull::new_unchecked(ptr as *const T as *mut T) },
+            id,
+        )
     }
 
     pub const unsafe fn new_unchecked(id: ContextId<'ctx>, ptr: *const T) -> Self {
