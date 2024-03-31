@@ -16,7 +16,7 @@ impl TypeHeader {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub enum Layout {
     Concrete(ConcreteLayout),
     // TODO: make RuntimeKnown expand to a Value that evaluates to a pair of size x align
@@ -24,7 +24,7 @@ pub enum Layout {
     Unknown,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub struct ConcreteLayout {
     pub(crate) size: u64,
     pub(crate) align: u64,

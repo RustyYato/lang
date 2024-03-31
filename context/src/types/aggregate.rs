@@ -87,12 +87,31 @@ impl<'ctx> AggregateData<'ctx> {
 unsafe impl<'ctx> BasicTypeData<'ctx> for AggregateData<'ctx> {
     const KIND: TypeKind = TypeKind::Aggregate;
 
-    fn layout(&self, _ctx: crate::Context<'ctx>) -> super::raw::Layout {
+    fn layout(&self, ctx: crate::Context<'ctx>) -> super::raw::Layout {
         let mut layout =
             super::raw::Layout::Concrete(super::raw::ConcreteLayout { size: 0, align: 1 });
 
         for field in &self.fields {
-            todo!()
+            let next = match field.ty.layout(ctx) {
+                super::raw::Layout::Concrete(next) => next,
+                super::raw::Layout::RuntimeKnown => {
+                    todo!("runtime layouts aren't supported yet in Aggregates")
+                }
+                super::raw::Layout::Unknown => return super::raw::Layout::Unknown,
+            };
+
+            match layout {
+                super::raw::Layout::Concrete(l) => {
+                    let align = l.align.max(next.align);
+                    let size = l.size.next_multiple_of(next.align) + next.size;
+                    layout =
+                        super::raw::Layout::Concrete(super::raw::ConcreteLayout { size, align });
+                }
+                super::raw::Layout::RuntimeKnown => {
+                    todo!("runtime layouts aren't supported yet in Aggregates")
+                }
+                super::raw::Layout::Unknown => unreachable!(),
+            };
         }
 
         layout
