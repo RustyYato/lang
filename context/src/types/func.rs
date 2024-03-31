@@ -80,6 +80,10 @@ impl<'ctx> FuncData<'ctx> {
 
 unsafe impl<'ctx> BasicTypeData<'ctx> for FuncData<'ctx> {
     const KIND: TypeKind = TypeKind::Func;
+
+    fn layout(&self, _ctx: crate::Context<'ctx>) -> super::raw::Layout {
+        super::raw::Layout::Unknown
+    }
 }
 
 unsafe impl<'ctx> TypeData<'ctx> for FuncData<'ctx> {

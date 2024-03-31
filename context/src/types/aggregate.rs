@@ -16,7 +16,7 @@ pub struct AggregateData<'ctx> {
 #[derive(Clone, Copy)]
 pub struct AggregateField<'ctx> {
     pub name: istr::IBytes,
-    pub field: super::Type<'ctx>,
+    pub ty: super::Type<'ctx>,
 }
 
 #[derive(Debug)]
@@ -86,6 +86,17 @@ impl<'ctx> AggregateData<'ctx> {
 
 unsafe impl<'ctx> BasicTypeData<'ctx> for AggregateData<'ctx> {
     const KIND: TypeKind = TypeKind::Aggregate;
+
+    fn layout(&self, _ctx: crate::Context<'ctx>) -> super::raw::Layout {
+        let mut layout =
+            super::raw::Layout::Concrete(super::raw::ConcreteLayout { size: 0, align: 1 });
+
+        for field in &self.fields {
+            todo!()
+        }
+
+        layout
+    }
 }
 
 unsafe impl<'ctx> TypeData<'ctx> for AggregateData<'ctx> {

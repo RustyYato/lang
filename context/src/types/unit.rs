@@ -22,4 +22,8 @@ impl init::Ctor for UnitData {
 
 unsafe impl<'ctx> BasicTypeData<'ctx> for UnitData {
     const KIND: TypeKind = TypeKind::Unit;
+
+    fn layout(&self, _ctx: crate::Context<'ctx>) -> super::raw::Layout {
+        super::raw::Layout::Concrete(super::raw::ConcreteLayout { size: 0, align: 1 })
+    }
 }

@@ -3,6 +3,7 @@ use std::hash::Hash;
 use crate::{
     ctx::{AllocContext, ContextId},
     ptr::ContextPtr,
+    Context,
 };
 
 pub struct TypeHeader {
@@ -13,6 +14,20 @@ impl TypeHeader {
     pub const fn of<'ctx, T: ?Sized + BasicTypeData<'ctx>>() -> Self {
         Self { kind: T::KIND }
     }
+}
+
+#[derive(Debug)]
+pub enum Layout {
+    Concrete(ConcreteLayout),
+    // TODO: make RuntimeKnown expand to a Value that evaluates to a pair of size x align
+    RuntimeKnown,
+    Unknown,
+}
+
+#[derive(Debug)]
+pub struct ConcreteLayout {
+    pub(crate) size: u64,
+    pub(crate) align: u64,
 }
 
 #[repr(u8)]
@@ -26,8 +41,21 @@ pub enum TypeKind {
     Func,
 }
 
+pub trait TypeCallback<'ctx> {
+    type Output;
+
+    fn call<T: ?Sized + BasicTypeData<'ctx>>(self, x: RawType<'ctx, T>) -> Self::Output;
+}
+
 pub unsafe trait BasicTypeData<'ctx>: 'ctx {
     const KIND: TypeKind;
+
+    // align must be a power of 2
+    fn layout(&self, ctx: Context<'ctx>) -> Layout;
+
+    fn packed_layout(&self, ctx: Context<'ctx>) -> Layout {
+        self.layout(ctx)
+    }
 }
 
 unsafe impl<'ctx, T: BasicTypeData<'ctx>> TypeData<'ctx> for T {
@@ -111,6 +139,34 @@ impl<'ctx, T: ?Sized> RawType<'ctx, T> {
 
     pub const fn get(self) -> &'ctx T {
         self.0.as_ref()
+    }
+
+    pub fn with_callback<F: TypeCallback<'ctx>>(self, callback: F) -> F::Output {
+        let ty = self.erase();
+        match self.header().kind {
+            TypeKind::Unit => callback.call(ty.cast::<super::UnitTy>()),
+            TypeKind::Int => callback.call(ty.cast::<super::IntTy>()),
+            TypeKind::Float => callback.call(ty.cast::<super::FloatTy>()),
+            TypeKind::Pointer => callback.call(ty.cast::<super::PointerTy>()),
+            TypeKind::Aggregate => callback.call(ty.cast::<super::AggregateTy>()),
+            TypeKind::Func => callback.call(ty.cast::<super::FuncTy>()),
+        }
+    }
+
+    pub fn layout(&self, ctx: Context<'ctx>) -> Layout {
+        struct LayoutCallback<'ctx> {
+            ctx: Context<'ctx>,
+        }
+
+        impl<'ctx> TypeCallback<'ctx> for LayoutCallback<'ctx> {
+            type Output = Layout;
+
+            fn call<T: ?Sized + BasicTypeData<'ctx>>(self, x: RawType<'ctx, T>) -> Self::Output {
+                x.get().layout(self.ctx)
+            }
+        }
+
+        self.with_callback(LayoutCallback { ctx })
     }
 }
 

@@ -32,6 +32,24 @@ impl init::Ctor<FloatKind> for FloatData {
 
 unsafe impl<'ctx> BasicTypeData<'ctx> for FloatData {
     const KIND: TypeKind = TypeKind::Float;
+
+    fn layout(&self, _ctx: crate::Context<'ctx>) -> super::raw::Layout {
+        match self.kind {
+            FloatKind::Ieee16Bit => {
+                super::raw::Layout::Concrete(super::raw::ConcreteLayout { size: 2, align: 2 })
+            }
+            FloatKind::Ieee32Bit => {
+                super::raw::Layout::Concrete(super::raw::ConcreteLayout { size: 4, align: 4 })
+            }
+            FloatKind::Ieee64Bit => {
+                super::raw::Layout::Concrete(super::raw::ConcreteLayout { size: 8, align: 8 })
+            }
+            FloatKind::Ieee128Bit => super::raw::Layout::Concrete(super::raw::ConcreteLayout {
+                size: 16,
+                align: 16,
+            }),
+        }
+    }
 }
 
 impl FloatTy<'_> {

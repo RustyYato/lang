@@ -255,22 +255,14 @@ impl<'ctx> init::Ctor<TypeContextDataArgs<'ctx, '_>> for TypeContextData<'ctx> {
     }
 }
 
-#[cfg(test)]
-const TEST_TARGET_SPEC: TargetSpec = TargetSpec {
-    pointer_size_bytes: 8,
-    pointer_align_log2: 3,
-    pointer_diff_size_bytes: 8,
-    pointer_diff_align_log2: 3,
-};
-
 #[test]
 fn test_func() {
-    super::Context::with(TEST_TARGET_SPEC, |ctx| {
+    super::Context::with(crate::TEST_TARGET_SPEC, |ctx| {
         let arg_ty = ctx.create_aggregate(
             "hello world",
             [crate::types::AggregateField {
                 name: istr::IBytes::new("field-name".as_bytes()),
-                field: ctx.pointer_ty(),
+                ty: ctx.pointer_ty(),
             }],
         );
         let a = ctx.function(ctx.pointer_ty(), &[arg_ty]);

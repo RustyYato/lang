@@ -43,6 +43,11 @@ impl<'ctx> Context<'ctx> {
     }
 
     #[inline]
+    pub const fn target(self) -> &'ctx TargetSpec {
+        &self.0.as_ref().target
+    }
+
+    #[inline]
     pub const fn type_ctx(self) -> TypeContext<'ctx> {
         let ptr = self.0.as_ptr();
         let ptr = unsafe { core::ptr::addr_of!((*ptr).ty) };
