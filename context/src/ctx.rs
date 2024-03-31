@@ -56,41 +56,87 @@ impl<'ctx> Context<'ctx> {
     }
 
     #[inline]
-    pub const fn unit_ty(self) -> crate::types::UnitTy<'ctx> {
-        self.type_ctx().unit()
+    pub const fn unit_ty(self) -> crate::types::Type<'ctx> {
+        self.type_ctx().unit().erase()
     }
 
     #[inline]
-    pub const fn pointer_ty(self) -> crate::types::PointerTy<'ctx> {
-        self.type_ctx().pointer()
+    pub const fn pointer_ty(self) -> crate::types::Type<'ctx> {
+        self.type_ctx().pointer().erase()
     }
 
     #[inline]
-    pub fn int_ty(self, bits: u16) -> crate::types::IntTy<'ctx> {
-        self.type_ctx().int(
-            self.alloc_ctx(),
-            NonZeroU16::new(bits).expect("cannot construct a zero-sized int type"),
-        )
+    pub fn int_ty(self, bits: u16) -> crate::types::Type<'ctx> {
+        self.type_ctx()
+            .int(
+                self.alloc_ctx(),
+                NonZeroU16::new(bits).expect("cannot construct a zero-sized int type"),
+            )
+            .erase()
     }
 
     #[inline]
-    pub const fn float_16_ty(self) -> crate::types::FloatTy<'ctx> {
-        self.type_ctx().float(crate::types::FloatKind::Ieee16Bit)
+    pub const fn float_16_ty(self) -> crate::types::Type<'ctx> {
+        self.type_ctx()
+            .float(crate::types::FloatKind::Ieee16Bit)
+            .erase()
     }
 
     #[inline]
-    pub const fn float_32_ty(self) -> crate::types::FloatTy<'ctx> {
-        self.type_ctx().float(crate::types::FloatKind::Ieee32Bit)
+    pub const fn float_32_ty(self) -> crate::types::Type<'ctx> {
+        self.type_ctx()
+            .float(crate::types::FloatKind::Ieee32Bit)
+            .erase()
     }
 
     #[inline]
-    pub const fn float_64_ty(self) -> crate::types::FloatTy<'ctx> {
-        self.type_ctx().float(crate::types::FloatKind::Ieee64Bit)
+    pub const fn float_64_ty(self) -> crate::types::Type<'ctx> {
+        self.type_ctx()
+            .float(crate::types::FloatKind::Ieee64Bit)
+            .erase()
     }
 
     #[inline]
-    pub const fn float_128_ty(self) -> crate::types::FloatTy<'ctx> {
-        self.type_ctx().float(crate::types::FloatKind::Ieee128Bit)
+    pub const fn float_128_ty(self) -> crate::types::Type<'ctx> {
+        self.type_ctx()
+            .float(crate::types::FloatKind::Ieee128Bit)
+            .erase()
+    }
+
+    #[inline]
+    pub fn get_aggregate(self, name: &str) -> Option<crate::types::Type<'ctx>> {
+        self.type_ctx()
+            .get_aggregate(istr::IBytes::new(name.as_bytes()))
+            .map(crate::types::AggregateTy::erase)
+    }
+
+    #[inline]
+    pub fn aggregate(self, name: &str) -> crate::types::Type<'ctx> {
+        self.type_ctx()
+            .aggregate(istr::IBytes::new(name.as_bytes()))
+            .erase()
+    }
+
+    #[inline]
+    pub fn create_aggregate<I>(self, name: &str, fields: I) -> crate::types::Type<'ctx>
+    where
+        I: IntoIterator<Item = crate::types::AggregateField<'ctx>>,
+        I::IntoIter: ExactSizeIterator,
+    {
+        self.type_ctx()
+            .create_aggregate(self.alloc_ctx(), istr::IBytes::new(name.as_bytes()), fields)
+            .erase()
+    }
+
+    #[inline]
+    pub fn function(
+        self,
+        ret: crate::types::Type<'ctx>,
+        args: &[crate::types::Type<'ctx>],
+    ) -> crate::types::Type<'ctx> {
+        self.type_ctx()
+            .function(self.alloc_ctx(), ret, args)
+            .erase()
     }
 }
 
@@ -119,13 +165,13 @@ impl<'ctx> AllocContext<'ctx> {
 impl<'ctx> init::Ctor<TargetSpec> for ContextData<'ctx> {
     type Error = core::convert::Infallible;
 
-    fn try_init<'a>(
-        ptr: init::ptr::Uninit<'a, Self>,
+    fn try_init(
+        ptr: init::ptr::Uninit<Self>,
         spec: TargetSpec,
-    ) -> Result<init::ptr::Init<'a, Self>, Self::Error> {
+    ) -> Result<init::ptr::Init<Self>, Self::Error> {
         init::init_struct! {
             ptr => Self {
-                id: init::init_fn(|ptr| ptr.write( ContextId(PhantomData))),
+                id: init::init(ContextId(PhantomData)),
                 target: init::init(spec),
                 bump: init::init(bumpme::Bump::new()),
                 ty: ty::TypeContextDataArgs {

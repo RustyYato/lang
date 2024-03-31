@@ -37,6 +37,7 @@ name = "context"
 version = "0.1.0"
 dependencies = [
  "bumpme",
+ "hashbrown",
  "init",
  "istr",
  "rustc-hash",

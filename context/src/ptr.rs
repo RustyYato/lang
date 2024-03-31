@@ -1,4 +1,4 @@
-use std::ptr::NonNull;
+use std::{hash::Hash, ptr::NonNull};
 
 use crate::ctx::ContextId;
 
@@ -8,6 +8,19 @@ impl<T: ?Sized> Copy for ContextPtr<'_, T> {}
 impl<T: ?Sized> Clone for ContextPtr<'_, T> {
     fn clone(&self) -> Self {
         *self
+    }
+}
+
+impl<T: ?Sized> Eq for ContextPtr<'_, T> {}
+impl<T: ?Sized> PartialEq for ContextPtr<'_, T> {
+    fn eq(&self, other: &Self) -> bool {
+        self.0 == other.0
+    }
+}
+
+impl<T: ?Sized> Hash for ContextPtr<'_, T> {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.0.hash(state);
     }
 }
 

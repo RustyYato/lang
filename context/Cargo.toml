@@ -7,4 +7,5 @@ edition = "2021"
 init.workspace = true
 bumpme.workspace = true
 rustc-hash.workspace = true
+hashbrown.workspace = true
 istr.workspace = true

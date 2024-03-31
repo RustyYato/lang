@@ -1,3 +1,5 @@
+use std::hash::Hash;
+
 use crate::{
     ctx::{AllocContext, ContextId},
     ptr::ContextPtr,
@@ -21,6 +23,7 @@ pub enum TypeKind {
     Float,
     Pointer,
     Aggregate,
+    Func,
 }
 
 pub unsafe trait BasicTypeData<'ctx>: 'ctx {
@@ -61,6 +64,18 @@ impl<T: ?Sized> Copy for RawType<'_, T> {}
 impl<T: ?Sized> Clone for RawType<'_, T> {
     fn clone(&self) -> Self {
         *self
+    }
+}
+
+impl<T: ?Sized> Eq for RawType<'_, T> {}
+impl<T: ?Sized> PartialEq for RawType<'_, T> {
+    fn eq(&self, other: &Self) -> bool {
+        self.0 == other.0
+    }
+}
+impl<T: ?Sized> Hash for RawType<'_, T> {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.0.hash(state);
     }
 }
 

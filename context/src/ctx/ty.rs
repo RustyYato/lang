@@ -1,4 +1,9 @@
-use std::{cell::UnsafeCell, collections::HashMap, hash::BuildHasherDefault, num::NonZeroU16};
+use std::{
+    cell::UnsafeCell,
+    collections::HashMap,
+    hash::{BuildHasherDefault, Hash, Hasher},
+    num::NonZeroU16,
+};
 
 use crate::{types, TargetSpec};
 
@@ -25,6 +30,7 @@ pub(super) struct TypeContextData<'ctx> {
     pub ptr: types::PointerTy<'ctx>,
 
     aggregate_cache: UnsafeCell<istr::IBytesMap<types::AggregateTy<'ctx>>>,
+    func_cache: UnsafeCell<hashbrown::HashTable<types::FuncTy<'ctx>>>,
 }
 
 impl<'ctx> super::TypeContext<'ctx> {
@@ -57,6 +63,8 @@ impl<'ctx> super::TypeContext<'ctx> {
     }
 
     fn int_slow(self, alloc: AllocContext<'ctx>, bits: NonZeroU16) -> types::IntTy<'ctx> {
+        assert!(!bits.get().is_power_of_two() || bits.get() > 256);
+
         let cache = unsafe { &mut *self.0.as_ref().int_cache.get() };
 
         *cache.entry(bits.get()).or_insert_with(|| {
@@ -76,11 +84,18 @@ impl<'ctx> super::TypeContext<'ctx> {
         }
     }
 
-    pub fn aggregate(self, name: istr::IBytes) -> Option<types::AggregateTy<'ctx>> {
+    pub fn get_aggregate(self, name: istr::IBytes) -> Option<types::AggregateTy<'ctx>> {
         let cache = self.0.as_ref().aggregate_cache.get();
         let cache = unsafe { &*cache };
 
         cache.get(&name).copied()
+    }
+
+    pub fn aggregate(self, name: istr::IBytes) -> types::AggregateTy<'ctx> {
+        let cache = self.0.as_ref().aggregate_cache.get();
+        let cache = unsafe { &*cache };
+
+        cache[&name]
     }
 
     pub fn create_aggregate<I: IntoIterator<Item = types::AggregateField<'ctx>>>(
@@ -92,7 +107,7 @@ impl<'ctx> super::TypeContext<'ctx> {
     where
         I::IntoIter: ExactSizeIterator,
     {
-        debug_assert!(self.aggregate(name).is_none());
+        debug_assert!(self.get_aggregate(name).is_none());
 
         let value = init::try_init_on_stack(types::AggregateTy::init_with::<
             _,
@@ -109,6 +124,54 @@ impl<'ctx> super::TypeContext<'ctx> {
 
         value
     }
+
+    pub fn function(
+        self,
+        alloc: AllocContext<'ctx>,
+        ret: types::Type<'ctx>,
+        args: &[types::Type<'ctx>],
+    ) -> types::FuncTy<'ctx> {
+        let ty = self.0.as_ref();
+        let cache = unsafe { &*ty.func_cache.get() };
+        let mut hasher = rustc_hash::FxHasher::default();
+        ret.hash(&mut hasher);
+        args.hash(&mut hasher);
+        let hash = hasher.finish();
+
+        if let Some(func) = cache.find(hash, |t| t.ret() == ret && t.args() == args) {
+            return *func;
+        }
+
+        self.function_slow(hash, alloc, ret, args)
+    }
+
+    #[cold]
+    fn function_slow(
+        self,
+        hash: u64,
+        alloc: AllocContext<'ctx>,
+        ret: types::Type<'ctx>,
+        args: &[types::Type<'ctx>],
+    ) -> types::FuncTy<'ctx> {
+        let value =
+            init::try_init_on_stack(types::FuncTy::init_with::<_, types::FuncLayoutProvider>(
+                types::FuncTy::init_data(ret, args.iter().copied()),
+                alloc,
+            ))
+            .expect("Invalid implementation of ExactSizeIterator");
+
+        let ty = self.0.as_ref();
+        let cache = unsafe { &mut *ty.func_cache.get() };
+
+        cache.insert_unique(hash, value, |value| {
+            let mut hasher = rustc_hash::FxHasher::default();
+            value.ret().hash(&mut hasher);
+            value.args().hash(&mut hasher);
+            hasher.finish()
+        });
+
+        value
+    }
 }
 
 pub(super) struct TypeContextDataArgs<'ctx, 'a> {
@@ -119,6 +182,7 @@ pub(super) struct TypeContextDataArgs<'ctx, 'a> {
 impl<'ctx> init::Ctor<TypeContextDataArgs<'ctx, '_>> for TypeContextData<'ctx> {
     type Error = core::convert::Infallible;
 
+    #[inline]
     fn try_init<'a>(
         ptr: init::ptr::Uninit<'a, Self>,
         args: TypeContextDataArgs<'ctx, '_>,
@@ -185,7 +249,33 @@ impl<'ctx> init::Ctor<TypeContextDataArgs<'ctx, '_>> for TypeContextData<'ctx> {
                 }),
                 int_cache: init::init(UnsafeCell::new(int_cache_)),
                 aggregate_cache: init::init(Default::default()),
+                func_cache: init::init(Default::default()),
             }
         }
     }
+}
+
+#[cfg(test)]
+const TEST_TARGET_SPEC: TargetSpec = TargetSpec {
+    pointer_size_bytes: 8,
+    pointer_align_log2: 3,
+    pointer_diff_size_bytes: 8,
+    pointer_diff_align_log2: 3,
+};
+
+#[test]
+fn test_func() {
+    super::Context::with(TEST_TARGET_SPEC, |ctx| {
+        let arg_ty = ctx.create_aggregate(
+            "hello world",
+            [crate::types::AggregateField {
+                name: istr::IBytes::new("field-name".as_bytes()),
+                field: ctx.pointer_ty(),
+            }],
+        );
+        let a = ctx.function(ctx.pointer_ty(), &[arg_ty]);
+        let arg_ty = ctx.get_aggregate("hello world").unwrap();
+        let b = ctx.function(ctx.pointer_ty(), &[arg_ty]);
+        assert!(a == b);
+    });
 }
